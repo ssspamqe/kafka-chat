@@ -1,8 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from kafka.kafka_producer import kafka_producer
+from kafka import kafka_producer
 import json
 import logging
-
 
 router = APIRouter()
 logger = logging.getLogger("kafka_chat_logger")
@@ -27,7 +26,7 @@ async def send_message_to_chat(websocket:WebSocket, chat:str):
         logger.info(f"{websocket.user} disconnected")
 
 
-def parse_send_chat_message_request(raw_data: str) -> SendChatMessageRequest:
+def parse_send_chat_message_request(raw_data: str):
     data = json.loads(raw_data)
     return SendChatMessageRequest(sender=data["sender"], text=data["text"], chat=data["chat"], tag=data["tag"])
   

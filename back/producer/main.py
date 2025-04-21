@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from websockets.endpoints.send_chat_message import router as chat_router
-from websockets.endpoints.send_global_message import router as global_router
+from custom_websockets.endpoints.send_chat_message import router as chat_router
+from custom_websockets.endpoints.send_global_message import router as global_router
 
 app = FastAPI()
 

@@ -1,4 +1,4 @@
-from confluent_kafka import KafkaAdminClient, NewTopic, Producer
+from confluent_kafka import Producer
 from config import config
 from config.logger_config import logger
 from confluent_kafka.admin import AdminClient, NewTopic

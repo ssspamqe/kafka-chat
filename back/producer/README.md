@@ -29,7 +29,6 @@
      {
        "sender": "string",
        "text": "string",
-       "chat": "string",
         "tag": "tag"
      }
      ```

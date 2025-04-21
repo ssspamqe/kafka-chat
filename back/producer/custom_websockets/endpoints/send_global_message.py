@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from kafka.kafka_producer import kafka_producer
+from kafka import kafka_producer
 import json
 import logging
 
@@ -25,7 +25,7 @@ async def send_message_to_global(websocket:WebSocket):
         logger.info(f"{websocket.user} disconnected")
 
 
-def parse_send_global_message_request(raw_data: str) -> SendGlobalMessageRequest:
+def parse_send_global_message_request(raw_data: str):
     data = json.loads(raw_data)
     return SendGlobalMessageRequest(sender=data["sender"], text=data["text"], tag = data["tag"])
     
