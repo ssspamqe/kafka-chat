@@ -1,9 +1,7 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from confluent_kafka import KafkaAdminClient, NewTopic, Producer
-from aiokafka import AIOKafkaProducer
-import asyncio
 from config import config
 from config.logger_config import logger
+from confluent_kafka.admin import AdminClient, NewTopic
 
 class Message:
     def __init__(self, sender: str, text: str, tag:str):
@@ -14,8 +12,7 @@ class Message:
 producer_config = {
     'bootstrap.servers': config.Variables.KAFKA_BOOTSTRAP_SERVERS
 }
-
-producer = Producer(producer_ config)
+producer = Producer(producer_config)
 
 def send_message_to_global(message:Message):
     topic_name=config.Variables.KAFKA_GLOBAL_TOPIC
@@ -27,8 +24,22 @@ def send_message_to_global(message:Message):
     
 def send_message_to_chat(chat, message:Message):
     topic_name = f'{config.Variables.KAFKA_CHAT_TOPIC_PREFIX}.{chat}'
+    create_kafka_topic_if_not_exists(f"kafka.chat.room.{chat}")
     
     logger.info(f"Sending message to chat {chat} in topic {topic_name}: {message.sender} - {message.text}, tag: {message.tag}")
     producer.produce(topic_name, message.encode('utf-8'))
     
     producer.flush()
+    
+    
+def create_kafka_topic_if_not_exists(topic_name: str):
+    admin_client = AdminClient({"bootstrap.servers": config.Variables.KAFKA_BOOTSTRAP_SERVERS})
+    existing_topics = admin_client.list_topics(timeout=10).topics
+
+    if topic_name not in existing_topics:
+        logger.info(f"Topic '{topic_name}' does not exist. Creating it...")
+        new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1)
+        admin_client.create_topics([new_topic])
+        logger.info(f"Topic '{topic_name}' created successfully.")
+    else:
+        logger.info(f"Topic '{topic_name}' already exists.")
