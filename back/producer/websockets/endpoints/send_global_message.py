@@ -25,13 +25,13 @@ async def send_message_to_global(websocket:WebSocket):
         logger.info(f"{websocket.user} disconnected")
 
 
-
 def parse_send_global_message_request(raw_data: str) -> SendGlobalMessageRequest:
     data = json.loads(raw_data)
-    return SendGlobalMessageRequest(sender=data["sender"], text=data["text"])
+    return SendGlobalMessageRequest(sender=data["sender"], text=data["text"], tag = data["tag"])
     
     
 class SendGlobalMessageRequest:
-    def __init__(self, sender: str, text: str):
+    def __init__(self, sender: str, text: str, tag:str):
         self.text = text
         self.sender = sender
+        self.tag = tag

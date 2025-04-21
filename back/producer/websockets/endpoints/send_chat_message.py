@@ -29,11 +29,12 @@ async def send_message_to_chat(websocket:WebSocket, chat:str):
 
 def parse_send_chat_message_request(raw_data: str) -> SendChatMessageRequest:
     data = json.loads(raw_data)
-    return SendChatMessageRequest(sender=data["sender"], text=data["text"], chat=data["chat"])
+    return SendChatMessageRequest(sender=data["sender"], text=data["text"], chat=data["chat"], tag=data["tag"])
   
           
 class SendChatMessageRequest:
-    def __init__(self, sender: str, text: str, chat: str):
+    def __init__(self, sender: str, text: str, chat: str, tag:str):
         self.sender = sender
         self.text = text
         self.chat = chat
+        self.tag = tag
