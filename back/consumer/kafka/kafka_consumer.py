@@ -1,6 +1,7 @@
 from confluent_kafka import Consumer, KafkaException
 from config import config
 from config.logger_config import logger
+from back.consumer.custom_websockets.endpoints.send_client_message import router as global_router
 
 class Message:
     def __init__(self, sender: str, text: str, tag:str):
@@ -28,15 +29,22 @@ def subscribe_to_topic(consumer, topic):
 def close_consumer(consumer):
     consumer.close()
 
-def consume_messages(consumer):
-    while True:
-        msg = consumer.poll(1.0)
-        if msg is None:
-            continue
-        if msg.error():
-            if msg.error().code() == KafkaException._PARTITION_EOF:
-                print("Достигнут конец партиции")
+async def consume_messages(consumer, websocket):
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                if msg.error().code() == KafkaException._PARTITION_EOF:
+                    logger.info(f"End of partition reached: {msg.topic()} [{msg.partition()}] at offset {msg.offset()}")
+                else:
+                    logger.info(f"Error occured: {msg.error()}")
+                continue
             else:
-                print(f"Ошибка: {msg.error()}")
-            continue
-    print("Запуск потребителя...")
+                message = msg.value().decode('utf-8')
+                logger.info(f"Received message from topic {msg.topic()}: {message}")
+                await websocket.send_text(message)
+                
+    except KeyboardInterrupt:
+        logger.info("Consumer interrupted by user.")
