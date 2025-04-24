@@ -1,4 +1,3 @@
-from back.consumer.config.config import Variables
 from back.consumer.config.logger_config import logger
 from fastapi import FastAPI
 from back.consumer.custom_websockets.endpoints.send_client_message import router as client_router
@@ -16,8 +15,6 @@ async def start_consumer():
     topic = "kafka.chat.global"
     consumer = create_consumer(conf, topic)
     subscribe_to_topic(consumer, topic)
-
-    print(f"Consumer started for topic: {topic}")
 
     try:
         await consume_messages(consumer, None)
