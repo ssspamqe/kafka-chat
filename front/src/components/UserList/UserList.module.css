@@ -1,0 +1,31 @@
+.userList {
+    width: 250px;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-left: 1px solid #dee2e6;
+  }
+  
+  .list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .userItem {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .username {
+    font-weight: 500;
+  }
+  
+  .tag {
+    color: #6c757d;
+    font-size: 0.8rem;
+    background: #e9ecef;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+  }
