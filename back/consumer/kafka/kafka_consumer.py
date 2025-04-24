@@ -1,7 +1,6 @@
 from confluent_kafka import Consumer, KafkaException
-from config import config
-from config.logger_config import logger
-from back.consumer.custom_websockets.endpoints.send_client_message import router as global_router
+from back.consumer.config import config
+from back.consumer.config.logger_config import logger
 
 class Message:
     def __init__(self, sender: str, text: str, tag:str):
@@ -15,12 +14,15 @@ conf = {
     'auto.offset.reset': config.Variables.KAFKA_OFFSET_RESET
 }
 
+logger.debug("Kafka consumer configuration: %s", conf)
+
 def create_consumer(base_conf, user_topic):
     logger.info(f"Creating consumer for topic {user_topic}...")
     temp_conf = base_conf.copy()
     temp_conf['group.id'] = user_topic
     consumer = Consumer(temp_conf)
     logger.info(f"Consumer for topic {user_topic} created successfully.")
+    logger.info("Kafka consumer created successfully.")
     return consumer
 
 def subscribe_to_topic(consumer, topic):
