@@ -1,4 +1,3 @@
-// src/services/mockApiService.js
 class MockApiService {
     constructor() {
       this.messageCallbacks = [];
@@ -36,10 +35,13 @@ class MockApiService {
         this.messageCallbacks = this.messageCallbacks.filter(cb => cb !== callback);
       };
     }
+
+    offMessage(callback) {
+      this.messageCallbacks = this.messageCallbacks.filter(cb => cb !== callback);
+    }
   
     send(message) {
       console.log("Mock send:", message);
-      // Имитация ответа
       setTimeout(() => {
         this.messageCallbacks.forEach(cb => cb({
           ...message,

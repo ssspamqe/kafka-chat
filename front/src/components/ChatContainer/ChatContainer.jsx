@@ -9,14 +9,23 @@ import './ChatContainer.css';
 const ChatContainer = () => {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
   const user = authService.getCurrentUser();
 
   useEffect(() => {
-    if (currentRoom) {
-      messageService.connectToRoom(currentRoom);
-    } else {
-      messageService.connectToGlobalChat();
-    }
+    const loadMessages = async () => {
+      if (currentRoom) {
+        const roomMessages = await messageService.loadRoomMessages(currentRoom);
+        setMessages(roomMessages);
+        messageService.connectToRoom(currentRoom);
+      } else {
+        const globalMessages = await messageService.loadRoomMessages('global');
+        setMessages(globalMessages);
+        messageService.connectToGlobalChat();
+      }
+    };
+
+    loadMessages();
 
     return () => messageService.disconnect();
   }, [currentRoom]);

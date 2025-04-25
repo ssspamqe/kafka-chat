@@ -13,6 +13,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
       setRooms([...rooms, newRoomName.trim()]);
       setNewRoomName('');
       setIsCreatingRoom(false);
+      onSelectRoom(newRoomName.trim());
     }
   };
 
