@@ -33,6 +33,8 @@ services:
       - kafka
     volumes:
       - ./back/producer:/app
+    ports:
+      - "8001:8001"
 
   consumer:
     build: ./back/consumer
