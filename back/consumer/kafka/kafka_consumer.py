@@ -9,7 +9,6 @@ def create_consumer(consumers, base_conf, user_topic):
     temp_conf = base_conf.copy()
     consumer = Consumer(temp_conf)
     subscribe_to_topic(consumer, user_topic)
-    logger.info(f"Consumer for topic {user_topic} created successfully.")
     logger.info("Kafka consumer created successfully.")
     consumers[user_topic] = consumer
     logger.info(f"Consumer for topic {user_topic} added to consumers dictionary.")
@@ -23,11 +22,18 @@ def get_consumer(consumers, base_conf, user_topic):
     logger.info(f"Getting consumer for topic {user_topic}...")
     if user_topic not in consumers:
         logger.info(f"Consumer for topic {user_topic} not found, creating a new one...")
-        consumer = create_consumer(consumers, base_conf, user_topic)
-        consumers[user_topic] = consumer
+        if "kafka.chat.room.global" not in consumers:
+            logger.info("Consumer for 'kafka.chat.room.global' not found, creating it...")
+            global_consumer = create_consumer(consumers, base_conf, "kafka.chat.room.global")
+            consumers["kafka.chat.room.global"] = global_consumer
+        else:
+            global_consumer = consumers["kafka.chat.room.global"]
+
+        subscribe_to_topic(global_consumer, user_topic)
+        consumers[user_topic] = global_consumer
     else:
         consumer = consumers[user_topic]
-    return consumer
+    return consumers[user_topic]
 
 def close_consumer(consumer):
     logger.info("Closing consumer...")

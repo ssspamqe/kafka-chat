@@ -33,6 +33,15 @@
      }
      ```
 
+2. **`/health`**
+   - **Description**: Health check endpoint to verify the consumer is running.
+   - **Response**:
+     ```json
+     {
+       "status": "Consumer is running"
+     }
+     ```
+
 ---
 
 ## Kafka Contract

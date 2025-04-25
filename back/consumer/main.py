@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     logger.info("FastAPI application startup event triggered.")
     logger.info("Creating temporary state for FastAPI application.")
     app.state.kafka_consumers = {}  # topic -> consumer
-    app.state.background_tasks = []  # Initialize background tasks list
+    app.state.background_tasks = []
 
     initialize_state(app.state)
 
@@ -23,7 +23,6 @@ async def lifespan(app: FastAPI):
     finally:
         logger.info("FastAPI application shutdown event triggered.")
 
-        # Cancel all background tasks
         for task in app.state.background_tasks:
             task.cancel()
             try:
