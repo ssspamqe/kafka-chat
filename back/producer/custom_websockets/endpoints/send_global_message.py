@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from kafka import kafka_producer
+from custom_kafka import kafka_producer
 import json
 import logging
 

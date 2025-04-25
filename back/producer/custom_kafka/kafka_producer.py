@@ -12,6 +12,7 @@ class Message:
 producer_config = {
     'bootstrap.servers': config.Variables.KAFKA_BOOTSTRAP_SERVERS
 }
+logger.info("Creating producer...")
 producer = Producer(producer_config)
 
 def send_message_to_global(message:Message):

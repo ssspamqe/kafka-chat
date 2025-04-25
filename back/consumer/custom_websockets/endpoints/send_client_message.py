@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from config.logger_config import logger
-from kafka.kafka_consumer import consume_messages, get_consumer
+from custom_kafka.kafka_consumer import consume_messages, get_consumer
 from config.config import KAFKA_CONFIG
 
 router = APIRouter()

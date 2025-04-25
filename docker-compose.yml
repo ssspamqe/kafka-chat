@@ -8,6 +8,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    networks:
+      - backend
 
   kafka:
     image: confluentinc/cp-kafka:7.3.0
@@ -23,6 +25,8 @@ services:
     ports:
       - "29092:29092"
       - "9092:9092"
+    networks:
+      - backend
 
   producer:
     build: ./back/producer 
@@ -35,6 +39,8 @@ services:
       - ./back/producer:/app
     ports:
       - "8001:8001"
+    networks:
+      - backend
 
   consumer:
     build: ./back/consumer
@@ -45,11 +51,11 @@ services:
       - kafka
     volumes:
       - ./back/consumer:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
 
-  # front:
-  #   build: ./front
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - producer
-  #     - consumer
+networks:
+  backend:
+    driver: bridge
