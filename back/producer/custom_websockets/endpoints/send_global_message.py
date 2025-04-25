@@ -17,7 +17,7 @@ async def send_message_to_global(websocket:WebSocket):
             
             send_message_request = parse_send_global_message_request(raw_send_message_json)
             
-            message = kafka_producer.Message(sender=send_message_request.sender, text=send_message_request.text)
+            message = kafka_producer.Message(sender=send_message_request.sender, text=send_message_request.text, tag=send_message_request.tag)
             
             kafka_producer.send_message_to_global(message)
             
