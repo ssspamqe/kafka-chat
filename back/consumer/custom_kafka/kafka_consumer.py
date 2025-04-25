@@ -1,4 +1,4 @@
-from confluent_kafka import Consumer, KafkaException
+from confluent_kafka import Consumer, KafkaError
 from config.config import KAFKA_CONFIG as conf
 from config.logger_config import logger
 
@@ -22,12 +22,12 @@ def get_consumer(consumers, base_conf, user_topic):
     logger.info(f"Getting consumer for topic {user_topic}...")
     if user_topic not in consumers:
         logger.info(f"Consumer for topic {user_topic} not found, creating a new one...")
-        if "kafka.chat.room.global" not in consumers:
-            logger.info("Consumer for 'kafka.chat.room.global' not found, creating it...")
-            global_consumer = create_consumer(consumers, base_conf, "kafka.chat.room.global")
-            consumers["kafka.chat.room.global"] = global_consumer
+        if user_topic not in consumers:
+            logger.info(f"Consumer for {user_topic} not found, creating it...")
+            global_consumer = create_consumer(consumers, base_conf, user_topic)
+            consumers[user_topic] = global_consumer
         else:
-            global_consumer = consumers["kafka.chat.room.global"]
+            global_consumer = consumers[user_topic]
 
         subscribe_to_topic(global_consumer, user_topic)
         consumers[user_topic] = global_consumer
@@ -45,10 +45,10 @@ async def consume_messages(consumer):
         if msg is None:
             return None
         if msg.error():
-            if msg.error().code() == KafkaException._PARTITION_EOF:
+            if msg.error().code() == KafkaError._PARTITION_EOF:
                 logger.info(f"End of partition reached: {msg.topic()} [{msg.partition()}] at offset {msg.offset()}")
             else:
-                logger.info(f"Error occured: {msg.error()}")
+                logger.info(f"Error occurred: {msg.error()}")
             return None
         else:
             message = msg.value().decode('utf-8')
