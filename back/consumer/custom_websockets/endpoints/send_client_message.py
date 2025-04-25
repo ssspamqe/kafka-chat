@@ -1,21 +1,37 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from back.consumer.config import config
-from back.consumer.config.logger_config import logger
-from back.consumer.kafka.kafka_consumer import create_consumer, consume_messages, conf, close_consumer
+from config.logger_config import logger
+from kafka.kafka_consumer import consume_messages, get_consumer
+from config.config import KAFKA_CONFIG
 
 router = APIRouter()
+state = None
 
-@router.websocket("/send-message/client/{receiver}")
-async def send_person_message(websocket: WebSocket, receiver: str):
-    logger.info("WebSocket endpoint /send-message/client/{receiver} is being initialized.")
+def initialize_state(app_state):
+    global state
+    state = app_state
+
+@router.websocket("/send-message/client/{topic}")
+async def send_person_message(websocket: WebSocket, topic: str):
     await websocket.accept()
-    logger.info(f"/send-message/client/{receiver} connected")
-    logger.info("WebSocket endpoint /send-message/client/{receiver} is now active.")
+    logger.info(f"WebSocket connection established with topic: {topic}")
 
-    consumer = create_consumer(conf, f"user_topic_{receiver}")
+    if state:
+        consumer = state.kafka_consumers.get(topic)
+        if not consumer:
+            logger.info(f"No consumer found for {topic}, creating one...")
+            consumer = get_consumer(state.kafka_consumers, KAFKA_CONFIG, topic)
+            state.kafka_consumers[topic] = consumer
+
     try:
-        await consume_messages(consumer, websocket)
+        while True:
+            if consumer:
+                message = await consume_messages(consumer)
+                if message:
+                    logger.info(f"Sending message to topic {topic}: {message}")
+                    await websocket.send_text(message)
     except WebSocketDisconnect:
-        logger.info(f"Client disconnected from /send-message/client/{receiver}")
+        logger.info(f"Client {topic} disconnected.")
+    except Exception as e:
+        logger.error(f"Error in WebSocket connection with {topic}: {e}")
     finally:
-        close_consumer(consumer)
+        logger.info(f"Closing WebSocket connection with {topic}.")

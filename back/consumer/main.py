@@ -1,29 +1,45 @@
-from back.consumer.config.logger_config import logger
 from fastapi import FastAPI
-from back.consumer.custom_websockets.endpoints.send_client_message import router as client_router
-from back.consumer.kafka.kafka_consumer import create_consumer, subscribe_to_topic, consume_messages, conf
-import uvicorn
+from custom_websockets.endpoints.send_client_message import router as client_router
+from custom_websockets.endpoints.send_client_message import initialize_state
+from kafka.kafka_consumer import get_consumer, consume_messages
+from config.config import KAFKA_CONFIG
 import asyncio
+from contextlib import asynccontextmanager
+from config.logger_config import logger
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("FastAPI application startup event triggered.")
+    logger.info("Creating temporary state for FastAPI application.")
+    app.state.kafka_consumers = {}  # topic -> consumer
+    app.state.background_tasks = []  # Initialize background tasks list
 
-logger.info("Starting the FastAPI application...")
+    initialize_state(app.state)
+
+    try:
+        yield
+    except asyncio.CancelledError:
+        logger.warning("Application shutdown interrupted by CancelledError.")
+    finally:
+        logger.info("FastAPI application shutdown event triggered.")
+
+        # Cancel all background tasks
+        for task in app.state.background_tasks:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                logger.info("Background task cancelled successfully.")
+
+        for consumer in app.state.kafka_consumers.values():
+            consumer.close()
+        logger.info("Kafka consumers closed.")
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(client_router)
 
-async def start_consumer():
-    topic = "kafka.chat.global"
-    consumer = create_consumer(conf, topic)
-    subscribe_to_topic(consumer, topic)
+@app.get("/health")
+async def health_check():
+    return {"status": "Consumer is running"}
 
-    try:
-        await consume_messages(consumer, None)
-    except Exception as e:
-        print(f"Error while consuming messages: {e}")
-    finally:
-        consumer.close()
-
-if __name__ == "__main__":
-    asyncio.run(start_consumer())
-    uvicorn.run(app, host="0.0.0.0", port=8001)
-    logger.info("FastAPI application is running.")
