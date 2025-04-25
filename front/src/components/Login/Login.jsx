@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Login.css';
 
-const Login = ({ onLogin }) => {
+const Login = ({onLogin}) => {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +31,7 @@ const Login = ({ onLogin }) => {
 
   const generateRandomName = () => {
     const adjectives = ['Happy', 'Clever', 'Swift', 'Gentle', 'Brave', 'Calm', 'Eager', 'Jolly'];
-    const nouns = ['Fox', 'Bear', 'Eagle', 'Dolphin', 'Tiger', 'Wolf', 'Lion', 'Owl'];
+    const nouns = ['Fox', 'Bear', 'Eagle', 'Dolphin', 'Tiger', 'Wolf', 'Lion', 'Owl', 'Beaver', 'Hippo', 'Panda'];
     const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     setUsername(`${randomAdj}${randomNoun}${Math.floor(Math.random() * 100)}`);
@@ -78,7 +78,7 @@ const Login = ({ onLogin }) => {
 
         <div className="featuresList">
           <div className="featureItem">
-            <span className="featureIcon">🌐</span> Join global chat rooms
+            <span className="featureIcon">🌐</span> Join global chat room
           </div>
           <div className="featureItem">
             <span className="featureIcon">🔒</span> Private messaging

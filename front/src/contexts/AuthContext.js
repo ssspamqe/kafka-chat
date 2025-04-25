@@ -11,8 +11,8 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const login = (username, tag) => {
-    authService.login(username, tag);
+  const login = (username) => {
+    authService.login(username);
   };
 
   const logout = () => {
