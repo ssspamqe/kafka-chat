@@ -3,90 +3,66 @@ import { apiService } from "./apiService";
 class MessageService {
   constructor() {
     this.subscribers = new Set();
-    this.messageHandlers = new Map();
   }
 
   async connectToGlobalChat() {
-    //await apiService.connect("/send-message/global");
-    await apiService.connect();
-    const handler = this.handleMessage.bind(this);
-    this.messageHandlers.set("global", handler);
-    apiService.onMessage(handler);
-
-    const messages = await this.loadRoomMessages("global");
-    messages.forEach((message) => this.handleMessage(message));
+    console.log("Connecting to global chat consumer...");
+    await apiService.connectToConsumer('/send-message/client/global');
+    apiService.onMessage((message) => {
+      console.log("Global chat message:", message);
+      this.handleMessage(message);
+    });
   }
-
+  
   async connectToRoom(roomId) {
-    await apiService.connect(`/send-message/chat/${roomId}`);
-    const handler = this.handleMessage.bind(this);
-    this.messageHandlers.set(roomId, handler);
-    apiService.onMessage(handler);
-
-    const messages = await this.loadRoomMessages(roomId);
-    messages.forEach((message) => this.handleMessage(message));
-  }
-
-  async loadRoomMessages(roomId) {
-    // const response = await fetch(`/api/rooms/${roomId}/messages`);
-    // return response.ok ? await response.json() : [];
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (roomId === "general") {
-          resolve([
-            {
-              text: "Добро пожаловать в #general!",
-              sender: "System",
-              timestamp: new Date().toISOString(),
-            },
-            {
-              text: "Здесь пока пусто",
-              sender: "System",
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-        } else {
-          resolve([]);
-        }
-      }, 300);
+    console.log(`Connecting to room ${roomId} consumer...`);
+    await apiService.connectToConsumer(`/send-message/client/${roomId}`);
+    apiService.onMessage((message) => {
+      console.log(`Room ${roomId} message:`, message);
+      this.handleMessage(message);
     });
   }
 
-  unsubscribeFromRoom(roomId) {
-    const handler = this.messageHandlers.get(roomId);
-    if (handler) {
-      apiService.offMessage(handler);
-      this.messageHandlers.delete(roomId);
-    }
+async loadRoomMessages(roomId) {
+  try {
+    const response = await fetch(`/api/messages/${roomId || 'global'}`);
+    return await response.json();
+  } catch {
+    return [
+      {
+        text: "Welcome to the chat!",
+        sender: "System",
+        timestamp: new Date().toISOString()
+      }
+    ];
   }
-
-  unsubscribeGlobal() {
-    const handler = this.messageHandlers.get("global");
-    if (handler) {
-      apiService.offMessage(handler);
-      this.messageHandlers.delete("global");
-    }
-  }
+}
 
   sendGlobalMessage({ text, sender, tag = "general" }) {
-    apiService.send({
-      type: "MESSAGE",
-      sender,
-      text,
-      tag,
-      timestamp: new Date().toISOString(),
-    });
+    apiService.connectToProducer('/send-message/global')
+      .then(() => {
+        apiService.send({
+          type: "MESSAGE",
+          sender,
+          text,
+          tag,
+          timestamp: new Date().toISOString()
+        });
+      });
   }
 
   sendRoomMessage(roomId, { text, sender, tag = "general" }) {
-    apiService.send({
-      type: "MESSAGE",
-      chat: roomId,
-      sender,
-      text,
-      tag,
-      timestamp: new Date().toISOString(),
-    });
+    apiService.connectToProducer(`/send-message/chat/${roomId}`)
+      .then(() => {
+        apiService.send({
+          type: "MESSAGE",
+          chat: roomId,
+          sender,
+          text,
+          tag,
+          timestamp: new Date().toISOString()
+        });
+      });
   }
 
   subscribe(callback) {
@@ -94,21 +70,22 @@ class MessageService {
     return () => this.subscribers.delete(callback);
   }
 
-  handleMessage(message) {
-    this.subscribers.forEach((callback) => callback(message));
+  formatIncomingMessage(rawMessage) {
+    return {
+      text: rawMessage.text,
+      sender: rawMessage.sender,
+      timestamp: rawMessage.timestamp || new Date().toISOString()
+    };
   }
 
-  unsubscribe(callback) {
-    this.subscribers.delete(callback);
+  handleMessage(rawMessage) {
+    const message = this.formatIncomingMessage(rawMessage);
+    this.subscribers.forEach(callback => callback(message));
   }
 
   disconnect() {
-    this.messageHandlers.forEach((handler, key) => {
-      apiService.offMessage(handler);
-    });
-    this.messageHandlers.clear();
-    this.subscribers.clear();
     apiService.disconnect();
+    this.subscribers.clear();
   }
 }
 

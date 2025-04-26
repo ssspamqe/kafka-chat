@@ -1,76 +1,81 @@
-import { USE_MOCK_API } from "../config";
-import { mockApiService } from "./mockApiService";
-
 class ApiService {
   constructor() {
-    this.socket = null;
+    this.producerSocket = null;
+    this.consumerSocket = null;
     this.messageCallbacks = [];
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.baseUrl = "ws://localhost:8000";
   }
 
-  offMessage(callback) {
-    this.messageCallbacks = this.messageCallbacks.filter(
-      (cb) => cb !== callback
-    );
+  async connectToConsumer(endpoint) {
+    return this._connect(endpoint, 'consumer', 'ws://localhost:8000');
   }
 
-  connect(endpoint) {
+  async connectToProducer(endpoint) {
+    return this._connect(endpoint, 'producer', 'ws://localhost:8001');
+  }
+
+  _connect(endpoint, type, baseUrl) {
     return new Promise((resolve, reject) => {
-      const url = `${this.baseUrl}${endpoint}`;
-      this.socket = new WebSocket(url);
+      const url = `${baseUrl}${endpoint}`;
+      console.log(`Connecting to ${type} at ${url}`);
 
-      this.socket.onopen = () => {
+      const socket = new WebSocket(url);
+      this[`${type}Socket`] = socket;
+
+      socket.onopen = () => {
+        console.log(`${type} connected`);
         this.reconnectAttempts = 0;
         resolve();
       };
 
-      this.socket.onerror = (error) => {
+      socket.onerror = (error) => {
+        console.error(`${type} error:`, error);
         reject(error);
       };
 
-      this.socket.onclose = () => {
+      socket.onclose = () => {
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           setTimeout(() => {
             this.reconnectAttempts++;
-            this.connect(endpoint);
+            this._connect(endpoint, type, baseUrl);
           }, 1000 * this.reconnectAttempts);
         }
       };
 
-      this.socket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          this.messageCallbacks.forEach((cb) => cb(message));
-        } catch (error) {
-          console.error("Error parsing message:", error);
-        }
-      };
+      if (type === 'consumer') {
+        socket.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            this.messageCallbacks.forEach(cb => cb(message));
+          } catch (error) {
+            console.error("Error parsing message:", error);
+          }
+        };
+      }
     });
   }
 
   send(data) {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
+    if (this.producerSocket?.readyState === WebSocket.OPEN) {
+      this.producerSocket.send(JSON.stringify(data));
+    } else {
+      console.error('Producer socket not connected');
     }
   }
 
   onMessage(callback) {
     this.messageCallbacks.push(callback);
     return () => {
-      this.messageCallbacks = this.messageCallbacks.filter(
-        (cb) => cb !== callback
-      );
+      this.messageCallbacks = this.messageCallbacks.filter(cb => cb !== callback);
     };
   }
 
   disconnect() {
-    this.socket?.close();
+    this.producerSocket?.close();
+    this.consumerSocket?.close();
     this.messageCallbacks = [];
   }
 }
 
-// export const apiService = new ApiService();
-
-export const apiService = USE_MOCK_API ? mockApiService : new ApiService();
+export const apiService = new ApiService();

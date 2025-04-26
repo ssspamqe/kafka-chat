@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { messageService } from '../../services/messageService';
-import { authService } from '../../services/authService';
-import MessageList from '../MessageList/MessageList';
-import MessageInput from '../MessageInput/MessageInput';
-import RoomList from '../RoomList/RoomList';
-import './ChatContainer.css';
+import { useState, useEffect } from "react";
+import { messageService } from "../../services/messageService";
+import { authService } from "../../services/authService";
+import MessageList from "../MessageList/MessageList";
+import MessageInput from "../MessageInput/MessageInput";
+import RoomList from "../RoomList/RoomList";
+import "./ChatContainer.css";
 
 const ChatContainer = () => {
   const [currentRoom, setCurrentRoom] = useState(null);
@@ -13,21 +13,35 @@ const ChatContainer = () => {
   const user = authService.getCurrentUser();
 
   useEffect(() => {
-    const loadMessages = async () => {
-      if (currentRoom) {
-        const roomMessages = await messageService.loadRoomMessages(currentRoom);
+    const loadData = async () => {
+      try {
+        const roomMessages = await messageService.loadRoomMessages(
+          currentRoom || "global"
+        );
         setMessages(roomMessages);
-        messageService.connectToRoom(currentRoom);
-      } else {
-        const globalMessages = await messageService.loadRoomMessages('global');
-        setMessages(globalMessages);
-        messageService.connectToGlobalChat();
+
+        if (currentRoom) {
+          await messageService.connectToRoom(currentRoom);
+        } else {
+          await messageService.connectToGlobalChat();
+        }
+
+        const unsubscribe = messageService.subscribe((newMessage) => {
+          if (!messages.some((m) => m.timestamp === newMessage.timestamp)) {
+            setMessages((prev) => [...prev, newMessage]);
+          }
+        });
+
+        return () => {
+          unsubscribe();
+          messageService.disconnect();
+        };
+      } catch (error) {
+        console.error("Connection error:", error);
       }
     };
 
-    loadMessages();
-
-    return () => messageService.disconnect();
+    loadData();
   }, [currentRoom]);
 
   const handleSendMessage = (text) => {
@@ -36,18 +50,19 @@ const ChatContainer = () => {
     const message = {
       text,
       sender: user.username,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
-    currentRoom 
+    setMessages((prev) => [...prev, message]);
+
+    currentRoom
       ? messageService.sendRoomMessage(currentRoom, message)
       : messageService.sendGlobalMessage(message);
   };
 
   return (
     <div className="chatApp">
-     
-      <button 
+      <button
         className="mobileMenuToggle"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
@@ -62,21 +77,17 @@ const ChatContainer = () => {
         )}
       </button>
 
-     
-      <div className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+      <div className={`sidebar ${isMobileMenuOpen ? "open" : ""}`}>
         <div className="userProfile">
           <div className="avatar">
             {user?.username?.charAt(0).toUpperCase()}
           </div>
           <div className="userInfo">
             <span className="username">{user?.username}</span>
-            <span className="status">
-              <span className="statusIndicator"></span> Online
-            </span>
           </div>
         </div>
-        
-        <RoomList 
+
+        <RoomList
           currentRoom={currentRoom}
           onSelectRoom={(room) => {
             setCurrentRoom(room);
@@ -85,22 +96,22 @@ const ChatContainer = () => {
         />
       </div>
 
-      
       <div className="mainContent">
         <div className="chatHeader">
           <div className="roomInfo">
-            <h2>{currentRoom ? `#${currentRoom}` : '🌐 Global Chat'}</h2>
+            <h2>{currentRoom ? `#${currentRoom}` : "🌐 Global Chat"}</h2>
             <div className="roomStats">
-              <span className="activeUsers">👥 42 online</span>
-              <span className="messageCount">💬 128 messages</span>
+              <span className="messageCount">
+                💬 {messages.length} messages
+              </span>
             </div>
           </div>
         </div>
-        
+
         <div className="messageArea">
-          <MessageList />
+          <MessageList messages={messages} />
         </div>
-        
+
         <MessageInput onSend={handleSendMessage} />
       </div>
     </div>
