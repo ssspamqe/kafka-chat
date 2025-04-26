@@ -1,9 +1,9 @@
 from collections import defaultdict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from config.logger_config import logger
-from custom_kafka.kafka_consumer import consume_messages, get_consumer
-from config.config import KAFKA_CONFIG
-from config.config import Variables
+from custom_kafka.kafka_consumer import subscribe_to_topic
+import config.config as config
+from asyncio import sleep
 
 router = APIRouter()
 state = None
@@ -12,44 +12,32 @@ def initialize_state(app_state):
     global state
     state = app_state
 
-# Maintain a mapping of topics to active WebSocket connections
-active_websockets = defaultdict(list)
-
 @router.websocket("/send-message/client/{chat}")
 async def send_person_message(websocket: WebSocket, chat: str):
     await websocket.accept()
     logger.info(f"WebSocket connection established with topic: {chat}")
 
-    if state:
-        topic = f'{Variables.KAFKA_CHAT_TOPIC_PREFIX}.{chat}' if chat != 'global' else Variables.KAFKA_GLOBAL_TOPIC
-        consumer = state.kafka_consumers.get(topic)
-        if not consumer:
-            logger.info(f"No consumer found for {topic}, creating one...")
-            consumer = get_consumer(state.kafka_consumers, KAFKA_CONFIG, topic)
-            state.kafka_consumers[topic] = consumer
+    topic = f'{config.KAFKA_CHAT_TOPIC_PREFIX}.{chat}' if chat != 'global' else config.KAFKA_GLOBAL_TOPIC
+    await subscribe_to_topic(state.consumer, topic)
 
-        # Add the WebSocket connection to the active list for the topic
-        active_websockets[topic].append(websocket)
-
+    if topic not in state.active_websockets:
+        state.active_websockets[topic] = []
+    
+    state.active_websockets[topic].append(websocket)
+    logger.info(f"WebSocket added to topic: {topic}. Total connections: {len(state.active_websockets[topic])}")
     try:
         while True:
-            if consumer:
-                message = await consume_messages(consumer)
-                if message:
-                    logger.info(f"Broadcasting message to topic {topic}: {message}")
-                    # Broadcast the message to all active WebSocket connections for the topic
-                    for ws in active_websockets[topic]:
-                        try:
-                            await ws.send_text(message)
-                        except WebSocketDisconnect:
-                            logger.info(f"WebSocket disconnected for topic {topic}")
-                            active_websockets[topic].remove(ws)
+            await sleep(1)
     except WebSocketDisconnect:
-        logger.info(f"Client disconnected from topic {topic}.")
-        active_websockets[topic].remove(websocket)
+        logger.info(f"WebSocket connection closed for topic: {topic}")
+        state.active_websockets[topic].remove(websocket)
+        if not state.active_websockets[topic]:
+            del state.active_websockets[topic]
     except Exception as e:
-        logger.error(f"Error in WebSocket connection with topic {topic}: {e}")
+        logger.error(f"Error in WebSocket connection: {e}")
     finally:
-        logger.info(f"Closing WebSocket connection with topic {topic}.")
-        if websocket in active_websockets[topic]:
-            active_websockets[topic].remove(websocket)
+        await websocket.close()
+        logger.info(f"WebSocket connection closed for topic: {topic}")
+        state.active_websockets[topic].remove(websocket)
+        if not state.active_websockets[topic]:
+            del state.active_websockets[topic]
