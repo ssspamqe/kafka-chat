@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from kafka import kafka_producer
+from custom_kafka import kafka_producer
 import json
 import logging
 
@@ -17,8 +17,7 @@ async def send_message_to_chat(websocket:WebSocket, chat:str):
             
             send_message_request = parse_send_chat_message_request(raw_send_message_json)
             
-            chat = send_message_request.chat
-            message = kafka_producer.Message(sender=send_message_request.sender, text=send_message_request.text)
+            message = kafka_producer.Message(sender=send_message_request.sender, text=send_message_request.text, tag=send_message_request.tag)
             
             kafka_producer.send_message_to_chat(chat,message)
             
@@ -28,12 +27,11 @@ async def send_message_to_chat(websocket:WebSocket, chat:str):
 
 def parse_send_chat_message_request(raw_data: str):
     data = json.loads(raw_data)
-    return SendChatMessageRequest(sender=data["sender"], text=data["text"], chat=data["chat"], tag=data["tag"])
+    return SendChatMessageRequest(sender=data["sender"], text=data["text"], tag=data["tag"])
   
           
 class SendChatMessageRequest:
-    def __init__(self, sender: str, text: str, chat: str, tag:str):
+    def __init__(self, sender: str, text: str, tag:str):
         self.sender = sender
         self.text = text
-        self.chat = chat
         self.tag = tag

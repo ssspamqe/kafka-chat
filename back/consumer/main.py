@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from custom_websockets.endpoints.send_client_message import router as client_router
 from custom_websockets.endpoints.send_client_message import initialize_state
-from kafka.kafka_consumer import get_consumer, consume_messages
-from config.config import KAFKA_CONFIG
 import asyncio
 from contextlib import asynccontextmanager
 from config.logger_config import logger

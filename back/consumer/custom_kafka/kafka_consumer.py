@@ -1,4 +1,4 @@
-from confluent_kafka import Consumer, KafkaException
+from confluent_kafka import Consumer, KafkaError
 from config.config import KAFKA_CONFIG as conf
 from config.logger_config import logger
 
@@ -17,6 +17,7 @@ def create_consumer(consumers, base_conf, user_topic):
 def subscribe_to_topic(consumer, topic):
     logger.info(f"Subscribing to topic {topic}...")
     consumer.subscribe([topic])
+    logger.info(f"Subscribed to topic {topic} successfully.")
 
 def get_consumer(consumers, base_conf, user_topic):
     logger.info(f"Getting consumer for topic {user_topic}...")
@@ -45,10 +46,10 @@ async def consume_messages(consumer):
         if msg is None:
             return None
         if msg.error():
-            if msg.error().code() == KafkaException._PARTITION_EOF:
+            if msg.error().code() == KafkaError._PARTITION_EOF:
                 logger.info(f"End of partition reached: {msg.topic()} [{msg.partition()}] at offset {msg.offset()}")
             else:
-                logger.info(f"Error occured: {msg.error()}")
+                logger.info(f"Error occurred: {msg.error()}")
             return None
         else:
             message = msg.value().decode('utf-8')

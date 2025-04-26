@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - backend
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    networks:
+      - backend
+
+  producer:
+    build: ./back/producer 
+    environment:
+      KAFKA_BROKER_URL: kafka:9092
+      KAFKA_TOPIC: chat-messages
+    depends_on:
+      - kafka
+    volumes:
+      - ./back/producer:/app
+    ports:
+      - "8001:8001"
+    networks:
+      - backend
+
+  consumer:
+    build: ./back/consumer
+    environment:
+      KAFKA_BROKER_URL: kafka:9092
+      KAFKA_TOPIC: chat-messages
+    depends_on:
+      - kafka
+    volumes:
+      - ./back/consumer:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
