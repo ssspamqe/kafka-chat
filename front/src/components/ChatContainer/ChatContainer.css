@@ -19,7 +19,7 @@
 }
 
 .dark-theme {
-  /* Темная тема (Telegram Dark) */
+ 
   --primary: #5694c3;
   --primary-gradient: #6ab0e8;
   --border-light: rgba(255, 255, 255, 0.05);
@@ -39,7 +39,7 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
 }
 
-/* Добавим кнопку переключения темы в header */
+
 .chatHeader {
   position: relative;
 }
