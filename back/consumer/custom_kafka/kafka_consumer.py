@@ -17,17 +17,18 @@ def create_consumer(consumers, base_conf, user_topic):
 def subscribe_to_topic(consumer, topic):
     logger.info(f"Subscribing to topic {topic}...")
     consumer.subscribe([topic])
+    logger.info(f"Subscribed to topic {topic} successfully.")
 
 def get_consumer(consumers, base_conf, user_topic):
     logger.info(f"Getting consumer for topic {user_topic}...")
     if user_topic not in consumers:
         logger.info(f"Consumer for topic {user_topic} not found, creating a new one...")
-        if user_topic not in consumers:
-            logger.info(f"Consumer for {user_topic} not found, creating it...")
-            global_consumer = create_consumer(consumers, base_conf, user_topic)
-            consumers[user_topic] = global_consumer
+        if "kafka.chat.room.global" not in consumers:
+            logger.info("Consumer for 'kafka.chat.room.global' not found, creating it...")
+            global_consumer = create_consumer(consumers, base_conf, "kafka.chat.room.global")
+            consumers["kafka.chat.room.global"] = global_consumer
         else:
-            global_consumer = consumers[user_topic]
+            global_consumer = consumers["kafka.chat.room.global"]
 
         subscribe_to_topic(global_consumer, user_topic)
         consumers[user_topic] = global_consumer
