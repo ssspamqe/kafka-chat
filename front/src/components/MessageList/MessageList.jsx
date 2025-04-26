@@ -9,7 +9,6 @@ const MessageList = ({ messages = [] }) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
   return (
     <div className="messages-container">
       {messages.map((msg, index) => (

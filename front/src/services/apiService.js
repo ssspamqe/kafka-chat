@@ -28,7 +28,6 @@ class ApiService {
         this.reconnectAttempts = 0;
         resolve();
       };
-
       socket.onerror = (error) => {
         console.error(`${type} error:`, error);
         reject(error);

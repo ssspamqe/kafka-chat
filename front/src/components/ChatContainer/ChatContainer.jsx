@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { messageService } from "../../services/messageService";
 import { authService } from "../../services/authService";
@@ -95,7 +96,6 @@ const ChatContainer = () => {
           }}
         />
       </div>
-
       <div className="mainContent">
         <div className="chatHeader">
           <div className="roomInfo">
@@ -111,7 +111,6 @@ const ChatContainer = () => {
         <div className="messageArea">
           <MessageList messages={messages} />
         </div>
-
         <MessageInput onSend={handleSendMessage} />
       </div>
     </div>
