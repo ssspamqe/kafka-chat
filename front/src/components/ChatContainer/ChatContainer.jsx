@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { messageService } from "../../services/messageService";
 import { authService } from "../../services/authService";
@@ -11,7 +10,29 @@ const ChatContainer = () => {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [darkTheme, setDarkTheme] = useState(false);
   const user = authService.getCurrentUser();
+
+  useEffect(() => {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('chatTheme');
+    
+    if (savedTheme) {
+      setDarkTheme(savedTheme === 'dark');
+    } else if (prefersDark) {
+      setDarkTheme(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (darkTheme) {
+      document.documentElement.classList.add('dark-theme');
+      localStorage.setItem('chatTheme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+      localStorage.setItem('chatTheme', 'light');
+    }
+  }, [darkTheme]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -45,24 +66,36 @@ const ChatContainer = () => {
     loadData();
   }, [currentRoom]);
 
-  const handleSendMessage = (text) => {
+  const handleSendMessage = (content) => {
     if (!user) return;
-
-    const message = {
-      text,
-      sender: user.username,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, message]);
-
-    currentRoom
-      ? messageService.sendRoomMessage(currentRoom, message)
-      : messageService.sendGlobalMessage(message);
+  
+ 
+    if (typeof content === 'string') {
+      const message = {
+        text: content,
+        sender: user.username,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, message]);
+      currentRoom
+        ? messageService.sendRoomMessage(currentRoom, message)
+        : messageService.sendGlobalMessage(message);
+    } 
+   
+    else {
+      const message = {
+        text: content.text,
+        sender: content.sender || user.username,
+        timestamp: content.timestamp || new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, message]);
+      currentRoom
+        ? messageService.sendRoomMessage(currentRoom, message)
+        : messageService.sendGlobalMessage(message);
+    }
   };
-
   return (
-    <div className="chatApp">
+    <div className={`chatApp ${darkTheme ? 'dark-theme' : ''}`}>
       <button
         className="mobileMenuToggle"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -106,6 +139,12 @@ const ChatContainer = () => {
               </span>
             </div>
           </div>
+          <button 
+            className="theme-toggle"
+            onClick={() => setDarkTheme(!darkTheme)}
+          >
+            {darkTheme ? '☀️ Light' : '🌙 Dark'}
+          </button>
         </div>
 
         <div className="messageArea">

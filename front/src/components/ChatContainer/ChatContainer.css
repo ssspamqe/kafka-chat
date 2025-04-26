@@ -1,17 +1,63 @@
 :root {
-  --primary: #6c5ce7;
-  --primary-dark: #5649c0;
-  --secondary: #00cec9;
-  --background: #f5f6fa;
-  --surface: rgba(255, 255, 255, 0.98); 
+  
+  --primary: #0088cc;
+  --primary-gradient: #00a8ff;
+  --border-light: rgba(0, 0, 0, 0.05);
+  --primary-dark: #0077b3;
+  --secondary: #00af9c;
+  --background: #e6ebee;
+  --surface: #ffffff;
   --border: rgba(0, 0, 0, 0.08);
-  --text-primary: #2d3436;
-  --text-secondary: #636e72;
-  --online: #00b894;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08); 
+  --text-primary: #000000;
+  --text-secondary: #707579;
+  --online: #2ecc71;
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.05);
+  --scrollbar-track: rgba(0, 0, 0, 0.05);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
 }
 
+.dark-theme {
+  /* Темная тема (Telegram Dark) */
+  --primary: #5694c3;
+  --primary-gradient: #6ab0e8;
+  --border-light: rgba(255, 255, 255, 0.05);
+  
+  --primary-dark: #4a7196;
+  --secondary: #4c9689;
+  --background: #17212b;
+  --surface: #232e3c;
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #e6eaed;
+  --text-secondary: #7d8b99;
+  --online: #00b341;
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.1);
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+}
 
+/* Добавим кнопку переключения темы в header */
+.chatHeader {
+  position: relative;
+}
+
+.theme-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
 .chatApp {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -21,7 +67,6 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow: hidden;
 }
-
 
 .sidebar {
   display: flex;
@@ -146,8 +191,8 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  padding: 0 1rem;
 }
-
 
 .mobileMenuToggle {
   display: none;
@@ -182,6 +227,33 @@
   color: var(--text-primary);
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.new-message {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Адаптивные стили */
+@media (max-width: 1024px) {
+  .chatApp {
+    grid-template-columns: 260px 1fr;
+  }
+  
+  .userProfile {
+    padding: 1rem 1.25rem;
+  }
+  
+  .chatHeader {
+    padding: 0.75rem 1.25rem;
+  }
+  
+  .roomInfo h2 {
+    font-size: 1.1rem;
+  }
+}
 
 @media (max-width: 768px) {
   .chatApp {
@@ -193,8 +265,9 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 280px;
+    width: 260px;
     transform: translateX(-100%);
+    z-index: 15;
   }
 
   .sidebar.open {
@@ -203,6 +276,22 @@
 
   .mobileMenuToggle {
     display: flex;
+    z-index: 20;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .userProfile {
+    padding: 1rem 1.25rem;
+    padding-left: 3.5rem;
+  }
+  
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
   }
   
   .chatHeader {
@@ -217,14 +306,70 @@
     width: 32px;
     height: 32px;
   }
+  
+  .messageArea {
+    padding: 0 0.75rem;
+  }
 }
 
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+@media (max-width: 480px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .userProfile {
+    padding-left: 3rem;
+  }
+  
+  .mobileMenuToggle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .chatHeader {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .roomInfo h2 {
+    font-size: 1rem;
+  }
+  
+  .messageCount {
+    font-size: 0.7rem;
+  }
+  
+  .messageArea {
+    padding: 0 0.5rem;
+  }
 }
 
-.new-message {
-  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+@media (max-width: 360px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .userProfile {
+    padding: 0.75rem 1rem;
+    padding-left: 2.75rem;
+  }
+  
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  margin-right: 8px;
+  }
+  
+  .username {
+    font-size: 0.85rem;
+  }
+  
+  .chatHeader {
+    padding: 0.5rem;
+  }
 }

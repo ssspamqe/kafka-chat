@@ -1,41 +1,107 @@
 .form {
-    display: flex;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-top: 1px solid #e1e1e1;
-  }
-  
-  .input {
-    flex: 1;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    font-size: 14px;
-    outline: none;
-    transition: border 0.3s;
-  }
-  
-  .input:focus {
-    border-color: #4d90fe;
-  }
-  
-  .button {
-    margin-left: 10px;
-    padding: 0 20px;
-    background-color: #4d90fe;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s;
-  }
-  
-  .button:hover {
-    background-color: #357ae8;
-  }
-  
-  .button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
+  display: flex;
+  padding: 1rem 1.25rem;
+  background-color: var(--surface);
+  border-top: 1px solid var(--border-light);
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+}
+.message-input-container {
+  position: relative;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.5rem;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+.picker-container {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  z-index: 10;
+  margin-bottom: 0.5rem;
+}
+
+
+
+.input {
+  flex: 1;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 2rem;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0.1, 1);
+  background-color: var(--background);
+  color: #000000; 
+}
+.dark-theme .input {
+  color: rgba(0, 0, 0, 0.9);
+  background-color: var(--surface);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.dark-theme {
+ 
+  --surface: #f5f5f5; 
+  --border: rgba(0, 0, 0, 0.15); 
+}
+
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.15);
+}
+
+.button {
+  margin-left: 0.75rem;
+  padding: 0 1.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-gradient));
+  color: white;
+  border: none;
+  border-radius: 2rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0.1, 1);
+  box-shadow: 0 2px 8px rgba(0, 136, 204, 0.2);
+}
+
+.button:hover {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  background: var(--text-secondary);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.7;
+}
