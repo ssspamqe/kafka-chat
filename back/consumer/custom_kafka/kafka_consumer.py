@@ -22,7 +22,7 @@ async def create_consumer(topic = [config.KAFKA_GLOBAL_TOPIC]):
         logger.info("Kafka consumer created successfully.")
     return consumer
 
-async def subscribe_to_topic(consumer, topic):
+async def subscribe_to_topic(consumer, topic):  
     current_subscription = consumer.subscription()
     
     if topic in current_subscription:
@@ -43,7 +43,7 @@ async def consume_messages(consumer, websocket):
         async for message in consumer:
             topic = message.topic
             structured_message = json.loads(message.value.decode('utf-8'))
-            structured_message["topic"] = topic
+            structured_message["chat"] = topic[len(config.KAFKA_CHAT_TOPIC_PREFIX) + 1:]
             logger.info(f"Received message: {structured_message}")
             try:
                 await websocket.send_json(structured_message)
