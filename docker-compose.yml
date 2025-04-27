@@ -1,13 +1,32 @@
 version: '3.8'
 
 services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    restart: always
+
+  mongo-service:
+    build: ./back/services
+    ports:
+      - "8003:8003"
+    depends_on:
+      - mongodb
+
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "2181:2181"
+      - "2182:2181"
     networks:
       - backend
 
@@ -59,3 +78,6 @@ services:
 networks:
   backend:
     driver: bridge
+
+volumes:
+  mongodb_data:

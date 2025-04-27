@@ -1,0 +1,6 @@
+pydantic
+datetime
+fastapi
+pymongo
+typing
+uvicorn
