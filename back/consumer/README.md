@@ -50,15 +50,15 @@ The Kafka Chat Consumer is a FastAPI-based microservice designed to handle WebSo
 
 ### WebSocket Endpoints
 
-1. **`/send-message/client/{username}`**
-   - **Description**: Sends messages to a specific client.
+1. **`/receive-message/client/{username}`**
+   - **Description**: Receives messages to a specific client.
    - **Message Format** (JSON):
      ```json
      {
        "sender": "string",
        "text": "string",
        "tag": "tag",
-       "topic": "topic_name"
+       "chat": "chat_name"
      }
      ```
 
@@ -93,7 +93,7 @@ The Kafka Chat Consumer is a FastAPI-based microservice designed to handle WebSo
      }
      ```
 
-2. **`kafka.chat.room.{chat}`**
+2. **`kafka.chat.{chat}`**
    - **Description**: Topic for messages in specific chat rooms.
    - **Message Format**:
      ```json
@@ -101,7 +101,7 @@ The Kafka Chat Consumer is a FastAPI-based microservice designed to handle WebSo
        "sender": "string",
        "text": "string",
        "tag": "tag",
-       "topic": "kafka.chat.room.{chat}"
+       "topic": "kafka.chat.{chat}"
      }
      ```
 
