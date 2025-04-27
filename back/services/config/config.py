@@ -4,4 +4,4 @@ class Variables:
     MONGO_CONNECTION_STRING = "mongodb://mongodb:27017"
     MONGO_DB = "kafka_chat_db"
     
-    PRODUCER_HOST = "localhost:8001"
+    PRODUCER_HOST = "producer:8000"
