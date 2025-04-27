@@ -1,4 +1,3 @@
-from pymongo import MongoClient
 def do_migrations(db, collections:list):
     for collection_name in collections:
         if collection_name not in db.list_collection_names():

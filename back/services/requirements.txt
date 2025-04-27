@@ -4,3 +4,4 @@ fastapi
 pymongo
 typing
 uvicorn
+requests

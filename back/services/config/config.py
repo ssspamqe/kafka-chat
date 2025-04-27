@@ -1,12 +1,7 @@
 class Variables:
-    KAFKA_BOOTSTRAP_SERVERS = "kafka:9092"
-    KAFKA_GLOBAL_TOPIC = "kafka.chat.global"
-    KAFKA_CHAT_TOPIC_PREFIX = "kafka.chat.room"
-    KAFKA_OFFSET_RESET = "earliest"
-    KAFKA_CONSUMER_GROUP = "my_consumer_group"
-
-KAFKA_CONFIG = {
-    'bootstrap.servers': Variables.KAFKA_BOOTSTRAP_SERVERS,
-    'group.id': Variables.KAFKA_CONSUMER_GROUP,
-    'auto.offset.reset': Variables.KAFKA_OFFSET_RESET
-}
+    MONGO_DB = "chat_app_db"
+    
+    MONGO_CONNECTION_STRING = "mongodb://mongodb:27017"
+    MONGO_DB = "kafka_chat_db"
+    
+    PRODUCER_HOST = "localhost:8001"
