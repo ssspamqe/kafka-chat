@@ -20,9 +20,9 @@ async def send_person_message(websocket: WebSocket, username: str):
         logger.warning(f"The user {username} already has a connection")
         await websocket.close()
         return
+
     logger.info(f"WebSocket connection established with user: {username}")
 
-    # Получение данных о пользователе из MongoDB через сервис
     try:
         response = requests.get(f'http://{config.MONGODB_SERVICE_HOST}:{config.MONGODB_PORT}/user/{username}')
         response.raise_for_status()
@@ -33,14 +33,16 @@ async def send_person_message(websocket: WebSocket, username: str):
         return
 
     chats = message.get('chats', [])
+    tag = message.get('tag', None)
 
-    # MOCK, нижнее удалить, когда будет подгрузка из mongodb
-    # consumer = await create_consumer([f'{config.KAFKA_CHAT_TOPIC_PREFIX}.{username}', f'{config.KAFKA_GLOBAL_TOPIC}'])
-    consumer = await create_consumer(chats) # Условно потом будет это, когда подгрузим
+    if username not in state.tags:
+        state.tags[username] = tag
+
+    consumer = await create_consumer(chats)
 
     state.consumers[username] = consumer
 
-    await consume_messages(consumer, websocket)
+    await consume_messages(consumer, websocket, state.tags[username])
 
     state.consumers.pop(username, None)
 

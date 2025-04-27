@@ -16,6 +16,7 @@ async def lifespan(app: FastAPI):
     subscribe_init_state(app.state)
 
     app.state.consumers = {}
+    app.state.tags = {}
 
     try:
         yield

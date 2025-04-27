@@ -50,11 +50,15 @@ async def subscribe_to_chat(consumer, chat, username):
         logger.error(f"Failed to notify MongoDB service about subscription to chat: {chat}. Status code: {response.status_code}")
     logger.info(f"Subscribed to chat topic: {chat}")
     
-async def consume_messages(consumer, websocket):
+async def consume_messages(consumer, websocket, tag):
     try:
         await consumer.start()
         async for message in consumer:
             topic = message.topic
+            msg_tag = message.tag
+            if tag != msg_tag and msg_tag != None:
+                logger.info(f"Message tag {msg_tag} does not match user tag {tag}. Skipping message.")
+                continue
             structured_message = json.loads(message.value.decode('utf-8'))
             structured_message["chat"] = topic[len(config.KAFKA_CHAT_TOPIC_PREFIX) + 1:]
             logger.info(f"Received message: {structured_message}")

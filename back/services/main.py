@@ -85,6 +85,13 @@ async def create_user(username:str):
     else:
         return {"status": "user already exists"}
 
+@app.post("/tag/{username}")
+async def create_tag(username:str, tag:str):
+    if users_repository.save_tag(username, tag):
+        return {"status": "ok"}
+    else:
+        return {"status": "user not found"}
+
 class CreateSubscriptionRequest(BaseModel):
     chat: str
     username: str
