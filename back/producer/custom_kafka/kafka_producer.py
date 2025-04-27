@@ -28,7 +28,7 @@ def send_message_to_global(message: Message):
 
 def send_message_to_chat(chat, message: Message):
     topic_name = f'{config.Variables.KAFKA_CHAT_TOPIC_PREFIX}.{chat}'
-    create_kafka_topic_if_not_exists(f"kafka.chat.room.{chat}")
+    create_kafka_topic_if_not_exists(f"kafka.chat.{chat}")
     serialized_message = json.dumps(message.__dict__).encode('utf-8')
 
     logger.info(f"Sending message to chat {chat} in topic {topic_name}: {message.sender} - {message.text}, tag: {message.tag}")

@@ -1,39 +1,74 @@
 # Kafka Chat Consumer
 
-## How to Start the Server
+## Overview
+The Kafka Chat Consumer is a FastAPI-based microservice designed to handle WebSocket connections and consume messages from Kafka topics. It facilitates real-time communication by subscribing users to specific topics and delivering messages efficiently.
 
-1. **Install Dependencies**:
+---
+
+## Features
+- **WebSocket Endpoints**: Real-time communication with clients.
+- **Kafka Integration**: Subscribes to Kafka topics and processes messages.
+- **Health Check**: Ensures the service is running and operational.
+
+---
+
+## Prerequisites
+- Python 3.9 or higher
+- Kafka server running and accessible
+
+---
+
+## Installation
+
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd kafka-chat/back/consumer
+   ```
+
+2. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Run the Server**:
+---
+
+## How to Start the Server
+
+1. **Run the Server**:
    ```bash
    uvicorn main:app --host 0.0.0.0 --port 8001
    ```
 
-3. **Access the API Documentation**:
+2. **Access the API Documentation**:
    - Swagger UI: [http://localhost:8001/docs](http://localhost:8001/docs)
    - ReDoc: [http://localhost:8001/redoc](http://localhost:8001/redoc)
 
 ---
 
-## API Contract
+## API Endpoints
 
 ### WebSocket Endpoints
 
-1. **`/send-message/client/{receiver}`**
-   - **Description**: Sends a message to a specific client.
+1. **`/send-message/client/{username}`**
+   - **Description**: Sends messages to a specific client.
    - **Message Format** (JSON):
      ```json
      {
        "sender": "string",
        "text": "string",
-       "tag": "tag"
+       "tag": "tag",
+       "topic": "topic_name"
      }
      ```
 
-2. **`/health`**
+2. **`/subscribing/{username}`**
+   - **Description**: Subscribes a user to a Kafka topic.
+   - **Parameters**:
+     - `username`: The username of the client.
+     - `topic`: The Kafka topic to subscribe to.
+
+3. **`/health`**
    - **Description**: Health check endpoint to verify the consumer is running.
    - **Response**:
      ```json
@@ -44,9 +79,7 @@
 
 ---
 
-## Kafka Contract
-
-### Topics
+## Kafka Topics
 
 1. **`kafka.chat.global`**
    - **Description**: Topic for global messages.
@@ -55,7 +88,8 @@
      {
        "sender": "string",
        "text": "string",
-       "tag": "tag"
+       "tag": "tag",
+       "topic": "kafka.chat.global"
      }
      ```
 
@@ -66,6 +100,25 @@
      {
        "sender": "string",
        "text": "string",
-       "tag": "tag"
+       "tag": "tag",
+       "topic": "kafka.chat.room.{chat}"
      }
      ```
+
+---
+
+## Project Structure
+- **`main.py`**: Entry point of the application.
+- **`custom_websockets/`**: Contains WebSocket endpoint implementations.
+- **`custom_kafka/`**: Kafka consumer logic.
+- **`config/`**: Configuration files for logging and application settings.
+
+---
+
+## Contributing
+Contributions are welcome! Please fork the repository and submit a pull request.
+
+---
+
+## License
+This project is licensed under the MIT License.

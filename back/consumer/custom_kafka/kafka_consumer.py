@@ -1,60 +1,61 @@
-from confluent_kafka import Consumer, KafkaError
-from config.config import KAFKA_CONFIG as conf
+from aiokafka import AIOKafkaConsumer
+import config.config as config
+import asyncio
+from pydantic import BaseModel
 from config.logger_config import logger
+import json
+from fastapi import WebSocket, WebSocketDisconnect
+import uuid
 
-logger.debug("Kafka consumer configuration: %s", conf)
-
-def create_consumer(consumers, base_conf, user_topic):
-    logger.info(f"Creating consumer for topic {user_topic}...")
-    temp_conf = base_conf.copy()
-    consumer = Consumer(temp_conf)
-    subscribe_to_topic(consumer, user_topic)
-    logger.info("Kafka consumer created successfully.")
-    consumers[user_topic] = consumer
-    logger.info(f"Consumer for topic {user_topic} added to consumers dictionary.")
+async def create_consumer(topic=None):
+    if topic is None:
+        topic = [config.KAFKA_GLOBAL_TOPIC]
+    logger.info("Creating Kafka consumer...")
+    unique_group_id = str(uuid.uuid4())
+    consumer = AIOKafkaConsumer(
+    *topic,
+    bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
+    group_id=unique_group_id,
+    auto_offset_reset=config.KAFKA_OFFSET_RESET,  
+    enable_auto_commit=True)
+    if not consumer:
+        logger.error("Failed to create Kafka consumer.")
+    else:
+        logger.info("Kafka consumer created successfully.")
     return consumer
 
-def subscribe_to_topic(consumer, topic):
-    logger.info(f"Subscribing to topic {topic}...")
-    consumer.subscribe([topic])
-    logger.info(f"Subscribed to topic {topic} successfully.")
+async def subscribe_to_topic(consumer, topic):  
+    current_subscription = consumer.subscription()
+    
+    if topic in current_subscription:
+        logger.info(f"Already subscribed to topic: {topic}")
+        return
+    
+    new_subscription = list(current_subscription) + [topic]
+    consumer.subscribe(new_subscription)
+    logger.info(f"Subscribed to topic: {topic}. Current topics: {new_subscription}")
 
-def get_consumer(consumers, base_conf, user_topic):
-    logger.info(f"Getting consumer for topic {user_topic}...")
-    if user_topic not in consumers:
-        logger.info(f"Consumer for topic {user_topic} not found, creating a new one...")
-        if "kafka.chat.room.global" not in consumers:
-            logger.info("Consumer for 'kafka.chat.room.global' not found, creating it...")
-            global_consumer = create_consumer(consumers, base_conf, "kafka.chat.room.global")
-            consumers["kafka.chat.room.global"] = global_consumer
-        else:
-            global_consumer = consumers["kafka.chat.room.global"]
-
-        subscribe_to_topic(global_consumer, user_topic)
-        consumers[user_topic] = global_consumer
-    else:
-        consumer = consumers[user_topic]
-    return consumers[user_topic]
-
-def close_consumer(consumer):
-    logger.info("Closing consumer...")
-    consumer.close()
-
-async def consume_messages(consumer):
+async def subscribe_to_chat(consumer, chat):
+    await subscribe_to_topic(consumer, f'{config.KAFKA_CHAT_TOPIC_PREFIX}.{chat}')
+    logger.info(f"Subscribed to chat topic: {chat}")
+    
+async def consume_messages(consumer, websocket):
     try:
-        msg = consumer.poll(1.0)
-        if msg is None:
-            return None
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                logger.info(f"End of partition reached: {msg.topic()} [{msg.partition()}] at offset {msg.offset()}")
-            else:
-                logger.info(f"Error occurred: {msg.error()}")
-            return None
-        else:
-            message = msg.value().decode('utf-8')
-            logger.info(f"Received message from topic {msg.topic()}: {message}")
-            return message
-                
-    except KeyboardInterrupt:
-        logger.info("Consumer interrupted by user.")
+        await consumer.start()
+        async for message in consumer:
+            topic = message.topic
+            structured_message = json.loads(message.value.decode('utf-8'))
+            structured_message["chat"] = topic[len(config.KAFKA_CHAT_TOPIC_PREFIX) + 1:]
+            logger.info(f"Received message: {structured_message}")
+            try:
+                await websocket.send_json(structured_message)
+                logger.info(f"Sent structured message to WebSocket: {structured_message}")
+            except WebSocketDisconnect:
+                logger.info(f"WebSocket disconnected for topic: {topic}")
+    except asyncio.CancelledError:
+        logger.warning("Message consumption cancelled.")
+    except Exception as e:
+        logger.error(f"Error consuming messages: {e}")
+    finally:
+        await consumer.stop()
+        logger.info("Kafka consumer stopped.")
