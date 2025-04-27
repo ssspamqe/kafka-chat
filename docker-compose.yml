@@ -81,4 +81,4 @@ networks:
     driver: bridge
 
 volumes:
-  mongodb_data:q
+  mongodb_data:
