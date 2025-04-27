@@ -4,15 +4,28 @@ from custom_websockets.endpoints.send_client_message import initialize_state
 import asyncio
 from contextlib import asynccontextmanager
 from config.logger_config import logger
-from custom_kafka.kafka_consumer import create_consumer, consume_messages
+from custom_kafka.kafka_consumer import create_consumer
 from collections import defaultdict
 
+state = None
+
+def get_state():
+    return state
+
+def initialize_state(app_state):
+    global state
+    state = app_state
+    
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("FastAPI application startup event triggered.")
     logger.info("Creating temporary state for FastAPI application.")
 
     initialize_state(app.state)
+
+    state.consumer = await create_consumer()
+
+    state.subscriptions = defaultdict(list)
 
     try:
         yield

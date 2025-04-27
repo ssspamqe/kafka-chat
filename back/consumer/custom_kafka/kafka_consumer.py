@@ -5,6 +5,9 @@ from pydantic import BaseModel
 from config.logger_config import logger
 import json
 from fastapi import WebSocket, WebSocketDisconnect
+from main import get_state
+
+state = get_state()
 
 async def create_consumer(topic = config.KAFKA_GLOBAL_TOPIC):
     logger.info("Creating Kafka consumer...")
@@ -20,7 +23,7 @@ async def create_consumer(topic = config.KAFKA_GLOBAL_TOPIC):
         logger.info("Kafka consumer created successfully.")
     return consumer
 
-async def subscribe_to_topic(consumer, topic):
+async def subscribe_to_topic(topic, consumer = state.consumer):
     current_subscription = consumer.subscription()
     
     if topic in current_subscription:
@@ -31,18 +34,21 @@ async def subscribe_to_topic(consumer, topic):
     consumer.subscribe(new_subscription)
     logger.info(f"Subscribed to topic: {topic}. Current topics: {new_subscription}")
 
-async def subscribe_to_chat(consumer, chat):
-    await subscribe_to_topic(consumer, f'{config.KAFKA_CHAT_TOPIC_PREFIX}.{chat}')
+async def subscribe_to_chat(chat):
+    await subscribe_to_topic(f'{config.KAFKA_CHAT_TOPIC_PREFIX}.{chat}')
     logger.info(f"Subscribed to chat topic: {chat}")
     
-async def consume_messages(consumer, websocket):
+async def consume_messages():
+    consumer = state.consumer
     try:
         await consumer.start()
         async for message in consumer:
             logger.info(f"Received message: {message.value.decode('utf-8')}")
             try:
-                await websocket.send_text(message.value.decode('utf-8'))
-                logger.info(f"Sent message to {message.topic}: {message.value.decode('utf-8')}")
+                webosockets = state.subscriptions[message.topic]
+                for ws in webosockets:
+                    await ws.send_text(message.value.decode('utf-8'))
+                    logger.info(f"Sent message to {message.topic}: {message.value.decode('utf-8')}")
             except WebSocketDisconnect:
                 logger.info(f"WebSocket disconnected for topic: {message.topic}")
     except asyncio.CancelledError:
