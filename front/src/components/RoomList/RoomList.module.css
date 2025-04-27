@@ -120,7 +120,7 @@
     gap: 0.5rem;
   }
   
-  .createButton, .cancelButton {
+  .joinButton, .cancelButton {
     flex: 1;
     padding: 0.5rem;
     border: none;
@@ -131,16 +131,16 @@
     transition: all 0.2s;
   }
   
-  .createButton {
+  .joinButton {
     background-color: #3498db;
     color: white;
   }
   
-  .createButton:hover {
+  .joinButton:hover {
     background-color: #2980b9;
   }
   
-  .createButton:disabled {
+  .joinButton:disabled {
     background-color: #3a4a60;
     cursor: not-allowed;
     opacity: 0.7;

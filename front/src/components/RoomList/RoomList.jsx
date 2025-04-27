@@ -6,13 +6,13 @@ const DEFAULT_ROOMS = ['general', 'random', 'help'];
 const RoomList = ({ currentRoom, onSelectRoom }) => {
   const [rooms, setRooms] = useState(DEFAULT_ROOMS);
   const [newRoomName, setNewRoomName] = useState('');
-  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [isJoinRoom, setIsJoinRoom] = useState(false);
 
-  const handleCreateRoom = () => {
+  const handleJoinRoom = () => {
     if (newRoomName.trim() && !rooms.includes(newRoomName.trim())) {
       setRooms([...rooms, newRoomName.trim()]);
       setNewRoomName('');
-      setIsCreatingRoom(false);
+      setIsJoinRoom(false);
       onSelectRoom(newRoomName.trim());
     }
   };
@@ -23,9 +23,9 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
         <h3 className={styles.title}>Chat Rooms</h3>
         <button 
           className={styles.addButton}
-          onClick={() => setIsCreatingRoom(!isCreatingRoom)}
+          onClick={() => setIsJoinRoom(!isJoinRoom)}
         >
-          {isCreatingRoom ? '×' : '+'}
+          {isJoinRoom ? '×' : '+'}
         </button>
       </div>
 
@@ -50,7 +50,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
         ))}
       </div>
 
-      {isCreatingRoom && (
+      {isJoinRoom && (
         <div className={styles.createRoom}>
           <input
             type="text"
@@ -62,17 +62,17 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
           />
           <div className={styles.actions}>
             <button 
-              onClick={() => setIsCreatingRoom(false)}
+              onClick={() => setIsJoinRoom(false)}
               className={styles.cancelButton}
             >
               Cancel
             </button>
             <button 
-              onClick={handleCreateRoom}
-              className={styles.createButton}
+              onClick={handleJoinRoom}
+              className={styles.joinButton}
               disabled={!newRoomName.trim()}
             >
-              Create
+              Join
             </button>
           </div>
         </div>
