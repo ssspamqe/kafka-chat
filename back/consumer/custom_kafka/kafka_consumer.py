@@ -7,7 +7,9 @@ import json
 from fastapi import WebSocket, WebSocketDisconnect
 import uuid
 
-async def create_consumer(topic = [config.KAFKA_GLOBAL_TOPIC]):
+async def create_consumer(topic=None):
+    if topic is None:
+        topic = [config.KAFKA_GLOBAL_TOPIC]
     logger.info("Creating Kafka consumer...")
     unique_group_id = str(uuid.uuid4())
     consumer = AIOKafkaConsumer(
