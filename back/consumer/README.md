@@ -22,14 +22,15 @@
 
 ### WebSocket Endpoints
 
-1. **`/send-message/client/{receiver}`**
-   - **Description**: Sends a message to a specific client.
+1. **`/send-message/client/{username}`**
+   - **Description**: Sends messages to a specific client.
    - **Message Format** (JSON):
      ```json
      {
        "sender": "string",
        "text": "string",
-       "tag": "tag"
+       "tag": "tag",
+       "topic": "topic_name"
      }
      ```
 
@@ -55,7 +56,8 @@
      {
        "sender": "string",
        "text": "string",
-       "tag": "tag"
+       "tag": "tag",
+       "topic": "kafka.chat.global"
      }
      ```
 
@@ -66,6 +68,7 @@
      {
        "sender": "string",
        "text": "string",
-       "tag": "tag"
+       "tag": "tag",
+       "topic": "kafka.chat.room.{chat}"
      }
      ```

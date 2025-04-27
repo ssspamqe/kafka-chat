@@ -5,13 +5,15 @@ from pydantic import BaseModel
 from config.logger_config import logger
 import json
 from fastapi import WebSocket, WebSocketDisconnect
+import uuid
 
-async def create_consumer(topic = config.KAFKA_GLOBAL_TOPIC):
+async def create_consumer(topic = [config.KAFKA_GLOBAL_TOPIC]):
     logger.info("Creating Kafka consumer...")
+    unique_group_id = str(uuid.uuid4())
     consumer = AIOKafkaConsumer(
-    topic,
+    *topic,
     bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
-    group_id=config.KAFKA_CONSUMER_GROUP,
+    group_id=unique_group_id,
     auto_offset_reset=config.KAFKA_OFFSET_RESET,  
     enable_auto_commit=True)
     if not consumer:
@@ -39,16 +41,19 @@ async def consume_messages(consumer, websocket):
     try:
         await consumer.start()
         async for message in consumer:
-            logger.info(f"Received message: {message.value.decode('utf-8')}")
+            topic = message.topic
+            structured_message = json.loads(message.value.decode('utf-8'))
+            structured_message["topic"] = topic
+            logger.info(f"Received message: {structured_message}")
             try:
-                await websocket.send_text(message.value.decode('utf-8'))
-                logger.info(f"Sent message to {message.topic}: {message.value.decode('utf-8')}")
+                await websocket.send_json(structured_message)
+                logger.info(f"Sent structured message to WebSocket: {structured_message}")
             except WebSocketDisconnect:
-                logger.info(f"WebSocket disconnected for topic: {message.topic}")
+                logger.info(f"WebSocket disconnected for topic: {topic}")
     except asyncio.CancelledError:
         logger.warning("Message consumption cancelled.")
     except Exception as e:
         logger.error(f"Error consuming messages: {e}")
     finally:
         await consumer.stop()
-        logger.info("Kafka consumer stopped.")  
+        logger.info("Kafka consumer stopped.")
