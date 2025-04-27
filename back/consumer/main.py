@@ -14,6 +14,8 @@ async def lifespan(app: FastAPI):
 
     initialize_state(app.state)
 
+    app.state.consumers = {}
+
     try:
         yield
     except asyncio.CancelledError:
