@@ -1,13 +1,14 @@
 version: '3.8'
 
 services:
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "2181:2181"
+      - "2182:2181"
     networks:
       - backend
 
@@ -39,7 +40,7 @@ services:
     volumes:
       - ./back/producer:/app
     ports:
-      - "8001:8001"
+      - "8000:8000"
     networks:
       - backend
 
@@ -53,10 +54,32 @@ services:
     volumes:
       - ./back/consumer:/app
     ports:
-      - "8000:8000"
+      - "8001:8000"
     networks:
       - backend
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - backend
+    restart: always
+
+  mongo-service:
+    build: ./back/services
+    ports:
+      - "8002:8000"
+    networks:
+      - backend
+    depends_on:
+      - mongodb
 
 networks:
   backend:
     driver: bridge
+
+volumes:
+  mongodb_data:
