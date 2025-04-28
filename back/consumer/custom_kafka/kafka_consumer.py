@@ -1,19 +1,22 @@
 from aiokafka import AIOKafkaConsumer
 import config.config as config
 import asyncio
-from pydantic import BaseModel
 from config.logger_config import logger
 import json
 from fastapi import WebSocket, WebSocketDisconnect
 import uuid
+import requests
 
-async def create_consumer(topic=None):
-    if topic is None:
-        topic = [config.KAFKA_GLOBAL_TOPIC]
+async def create_consumer(chats=None):
+    if chats is None or chats == [] or chats == ["global"]:
+        chats = [config.KAFKA_GLOBAL_TOPIC]
     logger.info("Creating Kafka consumer...")
     unique_group_id = str(uuid.uuid4())
+    for index, chat in enumerate(chats):
+        chats[index] = f'{config.KAFKA_CHAT_TOPIC_PREFIX}.{chat}'
+    logger.info(f"Subscribing to topics: {chats}")
     consumer = AIOKafkaConsumer(
-    *topic,
+    *chats,
     bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
     group_id=unique_group_id,
     auto_offset_reset=config.KAFKA_OFFSET_RESET,  
@@ -35,17 +38,37 @@ async def subscribe_to_topic(consumer, topic):
     consumer.subscribe(new_subscription)
     logger.info(f"Subscribed to topic: {topic}. Current topics: {new_subscription}")
 
-async def subscribe_to_chat(consumer, chat):
+async def subscribe_to_chat(consumer, chat, username):
     await subscribe_to_topic(consumer, f'{config.KAFKA_CHAT_TOPIC_PREFIX}.{chat}')
+    response = requests.post(
+        f'http://{config.MONGODB_SERVICE_HOST}:{config.MONGODB_PORT}/subscription',
+        json={"chat": chat, "username": username}
+    )
+    if response.status_code == 200:
+        logger.info(f"Successfully notified MongoDB service about subscription to chat: {chat}")
+    else:
+        logger.error(f"Failed to notify MongoDB service about subscription to chat: {chat}. Status code: {response.status_code}")
     logger.info(f"Subscribed to chat topic: {chat}")
     
-async def consume_messages(consumer, websocket):
+async def consume_messages(consumer, websocket, username):
     try:
         await consumer.start()
         async for message in consumer:
+            tag = None
+            response = requests.get(f'http://{config.MONGODB_SERVICE_HOST}:{config.MONGODB_PORT}/tag/{username}')
+            if response.status_code == 200:
+                response_data = response.json()
+                tag = response_data.get('tag', None)
+                logger.info(f"Received tag for user {username}: {tag}")
+            else:
+                logger.error(f"Failed to retrieve tag for user {username}. Status code: {response.status_code}")
             topic = message.topic
             structured_message = json.loads(message.value.decode('utf-8'))
             structured_message["chat"] = topic[len(config.KAFKA_CHAT_TOPIC_PREFIX) + 1:]
+            msg_tag = structured_message.get("tag", None)
+            if tag != msg_tag and msg_tag != None:
+                logger.info(f"Message tag {msg_tag} does not match user tag {tag}. Skipping message.")
+                continue
             logger.info(f"Received message: {structured_message}")
             try:
                 await websocket.send_json(structured_message)

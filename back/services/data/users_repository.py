@@ -25,9 +25,25 @@ class UsersRepository:
     def save_user_with_username(self, username: str):
         user = self.collection.find_one({"username": username})
         if not user:
-            self.collection.insert_one({"username": username, "chats": [], "tag": None})
+            self.collection.insert_one({"username": username, "chats": ['global'], "tag": None})
             return True
         return False
+    
+    def save_tag(self, username: str, tag: str):
+        user = self.collection.find_one({"username": username})
+        if user:
+            self.collection.update_one(
+                {"username": username},
+                {"$set": {"tag": tag}}
+            )
+            return True
+        return False
+
+    def get_tag(self, username: str):
+        user = self.collection.find_one({"username": username})
+        if user:
+            return user.get("tag")
+        return None
 
 class User(BaseModel):
     username: str
