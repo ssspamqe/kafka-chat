@@ -1,8 +1,9 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket
+from pydantic import BaseModel
 from config.logger_config import logger
-from custom_kafka.kafka_consumer import consume_messages, get_consumer
-from config.config import KAFKA_CONFIG
-from config.config import Variables
+from custom_kafka.kafka_consumer import consume_messages, create_consumer
+import config.config as config
+import requests
 
 router = APIRouter()
 state = None
@@ -11,29 +12,38 @@ def initialize_state(app_state):
     global state
     state = app_state
 
-@router.websocket("/send-message/client/{chat}")
-async def send_person_message(websocket: WebSocket, chat: str):
+@router.websocket("/receive-messages/user/{username}")
+async def send_person_message(websocket: WebSocket, username: str):
+    logger.info(f"WebSocket connection request for user: {username}")
     await websocket.accept()
-    logger.info(f"WebSocket connection established with topic: {chat}")
+    if username in state.consumers:
+        logger.warning(f"The user {username} already has a connection")
+        await websocket.close()
+        return
 
-    if state:
-        topic = f'{Variables.KAFKA_CHAT_TOPIC_PREFIX}.{chat}' if chat != 'global' else Variables.KAFKA_GLOBAL_TOPIC
-        consumer = state.kafka_consumers.get(topic)
-        if not consumer:
-            logger.info(f"No consumer found for {topic}, creating one...")
-            consumer = get_consumer(state.kafka_consumers, KAFKA_CONFIG, topic)
-            state.kafka_consumers[topic] = consumer
+    logger.info(f"WebSocket connection established with user: {username}")
 
     try:
-        while True:
-            if consumer:
-                message = await consume_messages(consumer)
-                if message:
-                    logger.info(f"Sending message to topic {topic}: {message}")
-                    await websocket.send_text(message)
-    except WebSocketDisconnect:
-        logger.info(f"Client {topic} disconnected.")
-    except Exception as e:
-        logger.error(f"Error in WebSocket connection with {topic}: {e}")
-    finally:
-        logger.info(f"Closing WebSocket connection with {topic}.")
+        response = requests.get(f'http://{config.MONGODB_SERVICE_HOST}:{config.MONGODB_PORT}/user/{username}')
+        response.raise_for_status()
+        message = response.json()
+    except requests.RequestException as e:
+        logger.error(f"Ошибка при запросе данных пользователя {username}: {e}")
+        await websocket.close()
+        return
+
+    chats = message.get('chats', [])
+    tag = message.get('tag', None)
+
+    consumer = await create_consumer(chats)
+
+    state.consumers[username] = consumer
+
+    await consume_messages(consumer, websocket, username)
+
+    state.consumers.pop(username, None)
+
+    logger.info(f"WebSocket connection closed for user: {username}")
+    await websocket.close()
+
+
