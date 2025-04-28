@@ -35,14 +35,11 @@ async def send_person_message(websocket: WebSocket, username: str):
     chats = message.get('chats', [])
     tag = message.get('tag', None)
 
-    if username not in state.tags:
-        state.tags[username] = tag
-
     consumer = await create_consumer(chats)
 
     state.consumers[username] = consumer
 
-    await consume_messages(consumer, websocket, state.tags[username])
+    await consume_messages(consumer, websocket, username)
 
     state.consumers.pop(username, None)
 

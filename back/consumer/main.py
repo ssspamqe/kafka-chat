@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from custom_websockets.endpoints.send_client_message import router as client_router
-from custom_websockets.endpoints.subscribe_topic import router as subscribe_router 
+from custom_websockets.endpoints.subscribe import router as subscribe_router 
 from custom_websockets.endpoints.send_client_message import initialize_state as client_init_state
-from custom_websockets.endpoints.subscribe_topic import initialize_state as subscribe_init_state
+from custom_websockets.endpoints.subscribe import initialize_state as subscribe_init_state
 import asyncio
 from contextlib import asynccontextmanager
 from config.logger_config import logger
@@ -16,7 +16,6 @@ async def lifespan(app: FastAPI):
     subscribe_init_state(app.state)
 
     app.state.consumers = {}
-    app.state.tags = {}
 
     try:
         yield

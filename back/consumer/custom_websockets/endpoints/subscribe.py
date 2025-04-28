@@ -25,22 +25,6 @@ async def subscribe_user(chat: str, username: str):
         logger.warning(f"No consumer found for user: {username}")
     else:
         await subscribe_to_chat(state.consumers[username], chat, username)
-        logger.info(f"Subscribed user {username} to chat: {chat}")
+    logger.info(f"Subscribed user {username} to chat: {chat}")
 
     return {"message": "nonono mr fish you dont want to go to this bucket"} 
-
-@router.post("/change-tag/{username}")
-async def change_tag(tag: str, username: str):
-    logger.info(f"Changing tag for user {username} to {tag}")
-    if username not in state.tags:
-        logger.warning(f"No tag found for user: {username}")
-    else:
-        state.tags[username] = tag
-        logger.info(f"Changed tag for user {username} to {tag}")
-
-    response = requests.post(f"http://{config.MONGODB_SERVICE_HOST}:{config.MONGODB_PORT}/tag/{username}", json={"tag": tag})
-    if response.status_code == 200:
-        logger.info(f"Successfully notified MongoDB service about tag change for user: {username}")
-    else:
-        logger.error(f"Failed to notify MongoDB service about tag change for user: {username}. Status code: {response.status_code}")
-    return {"message": "just do it, mr fish"}
