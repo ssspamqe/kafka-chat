@@ -81,27 +81,27 @@
 }
 
 .userProfile {
-  padding: 1.25rem 1.5rem;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--border);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
 }
 
+
 .avatar {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-right: 12px;
-  flex-shrink: 0;
+  font-weight: bold;
+  font-size: 1.2rem;
 }
-
 .userInfo {
   display: flex;
   flex-direction: column;
@@ -115,6 +115,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.userTag {
+  font-size: 0.75rem;
+  color: #6b7280;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
 .mainContent {
@@ -402,4 +408,82 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.userTag {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  margin-top: 2px;
+}
+/* Стили для редактирования тега */
+.tagContainer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.editTagButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 0.8rem;
+  padding: 2px;
+}
+
+.editTagButton:hover {
+  opacity: 1;
+}
+
+/* Модальное окно */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.tagEditModal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tagEditModal input {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modalButtons button {
+  padding: 5px 10px;
+  cursor: pointer;
 }

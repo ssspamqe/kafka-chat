@@ -4,6 +4,7 @@ import './Login.css';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
+  const [tag, setTag] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
@@ -25,7 +26,7 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      await login(username);
+      await login(username, tag); 
       onLogin();
     } catch (error) {
       setError(error.message.includes('already exists') 
@@ -42,6 +43,7 @@ const Login = ({ onLogin }) => {
     const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     setUsername(`${randomAdj}${randomNoun}${Math.floor(Math.random() * 100)}`);
+    setTag(`#${Math.floor(Math.random() * 9000 + 1000)}`); 
   };
 
   return (
@@ -61,6 +63,21 @@ const Login = ({ onLogin }) => {
             className="input"
             autoFocus
           />
+        </div>
+        
+        <div className="formGroup">
+          <input
+            id="tag"
+            type="text"
+            value={tag}
+            onChange={(e) => {
+              setTag(e.target.value);
+              setError('');
+            }}
+            placeholder="Your tag (e.g. #1234)"
+            className="input"
+          />
+          <small className="tagHint">Optional unique identifier</small>
         </div>
         
         {error && <div className="error">{error}</div>}

@@ -266,20 +266,5 @@
   overflow: hidden;
   min-height: 0; 
 }
-.message-tag {
-  display: inline-block;
-  background: #e1f5fe;
-  color: #0288d1;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  margin-right: 8px;
-  margin-left: 5px;
-}
-
-.message-header .message-tag {
-  margin-left: 8px;
-  vertical-align: middle;
-}
 
 
