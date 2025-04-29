@@ -7,6 +7,7 @@ class MessageService {
     this.currentRooms = new Set(['global']); 
     this.username = null;
     this.consumerSocket = null;
+    this.producerSocket = null;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 3;
   }
@@ -87,7 +88,7 @@ class MessageService {
 
   async sendMessage(roomId, message) {
     try {
-      if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      if (!this.producerSocket || this.producerSocket.readyState !== WebSocket.OPEN) {
         // throw new Error("Not connected to chat");
         this.producerSocket = new WebSocket(
           `ws://${config.SERVICE_HOST}:${config.PRODUCER_HOST}/send-message/chat/${roomId}`
@@ -120,9 +121,13 @@ class MessageService {
   }
 
   disconnect() {
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
+    if (this.consumerSocket) {
+      this.consumerSocket.close();
+      this.consumerSocket = null;
+    }
+    if (this.producerSocket) {
+      this.producerSocket.close();
+      this.producerSocket = null;
     }
     this.subscribers.clear();
     this.username = null;
