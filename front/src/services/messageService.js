@@ -86,21 +86,21 @@ class MessageService {
       throw error;
     }
   }
-  async unsubscribeFromRoom(roomId) {
-    if (!this.username || !this.currentRooms.has(roomId)) return;
+  // async unsubscribeFromRoom(roomId) {
+  //   if (!this.username || !this.currentRooms.has(roomId)) return;
   
-    try {
-      await apiService.sendRequest(
-        "/unsubscribe",
-        { chat: roomId, username: this.username },
-        "POST"
-      );
-      this.currentRooms.delete(roomId);
-    } catch (error) {
-      console.error("Failed to unsubscribe from room:", error);
-      throw error;
-    }
-  }
+  //   try {
+  //     await apiService.sendRequest(
+  //       "/unsubscribe",
+  //       { chat: roomId, username: this.username },
+  //       "POST"
+  //     );
+  //     this.currentRooms.delete(roomId);
+  //   } catch (error) {
+  //     console.error("Failed to unsubscribe from room:", error);
+  //     throw error;
+  //   }
+  // }
 
   
   async sendMessage(roomId, message) {

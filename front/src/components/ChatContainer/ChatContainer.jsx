@@ -37,36 +37,13 @@ const ChatContainer = () => {
   }, [darkTheme]);
 
   const handleNewMessage = useCallback((newMessage) => {
-    // Убедитесь, что сообщение пришло для текущей комнаты
-    if ((currentRoom && newMessage.chat === currentRoom) || 
-        (!currentRoom && (!newMessage.chat || newMessage.chat === 'global'))) {
-      setMessages(prev => [...prev, {
-        ...newMessage,
-        timestamp: newMessage.timestamp || new Date().toISOString()
-      }]);
+    if (
+      (currentRoom && newMessage.chat === currentRoom) ||
+      (!currentRoom && newMessage.chat === "global")
+    ) {
+      setMessages((prev) => [...prev, newMessage]);
     }
   }, [currentRoom]);
-  // const handleNewMessage = useCallback((newMessage) => {
-   
-  //   const messageRoom = newMessage.chat || newMessage.roomId;
-  //   const current = currentRoom || 'global';
-    
-  //   if (messageRoom === current) {
-  //     setMessages(prev => [...prev, {
-  //       ...newMessage,
-  //       timestamp: newMessage.timestamp || new Date().toISOString()
-  //     }]);
-  //   }
-  // }, [currentRoom]);
-
-  // const handleNewMessage = useCallback((newMessage) => {
-  //   if (
-  //     (currentRoom && newMessage.chat === currentRoom) ||
-  //     (!currentRoom && newMessage.chat === "global")
-  //   ) {
-  //     setMessages((prev) => [...prev, newMessage]);
-  //   }
-  // }, [currentRoom]);
   
   useEffect(() => {
     if (!user) return;
@@ -88,80 +65,33 @@ const ChatContainer = () => {
   
     initializeChat();
   }, [user, handleNewMessage]);
-  const handleSendMessage = async (content) => {
+
+  const handleSendMessage = (content) => {
     if (!user) return;
-  
 
     const message = {
-      text: content.text,
+      text: typeof content === "string" ? content : content.text,
       sender: user.username,
-      tag: content.shouldAttachTag ? user.tag : null, 
-      timestamp: new Date().toISOString()
+      tag: user.tag || null,
+      timestamp: new Date().toISOString(),
     };
-  
+
     const targetRoom = currentRoom || "global";
-  
-    try {
-     
-      if (content.shouldAttachTag && targetRoom && targetRoom !== "global") {
-        await authService.updateUserTag(targetRoom);
-      }
-      
-      await messageService.sendMessage(targetRoom, message);
-    } catch (error) {
-      console.error("Ошибка отправки:", error);
-    }
+    messageService.sendMessage(targetRoom, message);
   };
-  // const handleSendMessage = (content) => {
-  //   if (!user) return;
 
-  //   const message = {
-  //     text: typeof content === "string" ? content : content.text,
-  //     sender: user.username,
-  //     tag: user.tag || null,
-  //     timestamp: new Date().toISOString(),
-  //   };
+    const handleRoomChange = async (room) => {
+      setCurrentRoom(room);
+      setMessages([]);
 
-  //   const targetRoom = currentRoom || "global";
-  //   messageService.sendMessage(targetRoom, message);
-  // };
-
-//     const handleRoomChange = async (room) => {
-//       setCurrentRoom(room);
-  
- 
-//   try {
-//     const history = await messageService.loadHistory(room || 'global');
-//     setMessages(history);
-    
-//     if (room && room !== 'global') {
-//       await messageService.subscribeToRoom(room);
-//     }
-//   } catch (error) {
-//     console.error("Room change error:", error);
-//   }
-// };
-const handleRoomChange = async (room) => {
-  setCurrentRoom(room);
-  
-  try {
-    // Отписываемся от предыдущей комнаты (если нужно)
-    if (currentRoom && currentRoom !== 'global') {
-      await messageService.unsubscribeFromRoom(currentRoom);
-    }
-    
-    // Загружаем историю новой комнаты
-    const history = await messageService.loadHistory(room || 'global');
-    setMessages(history);
-    
-    // Подписываемся на новую комнату
-    if (room && room !== 'global') {
-      await messageService.subscribeToRoom(room);
-    }
-  } catch (error) {
-    console.error("Room change error:", error);
-  }
-};
+      if (room && room !== 'global') {
+        try {
+          await messageService.subscribeToRoom(room);
+        } catch (error) {
+          console.error("Failed to change room:", error);
+        }
+      }
+  };
 
   return (
     <div className={`chatApp ${darkTheme ? "dark-theme" : ""}`}>

@@ -144,7 +144,7 @@ async def create_subscription(request: CreateSubscriptionRequest):
     users_repository.add_chat_subscription(request.username, request.chat)
     url = f"http://{Variables.CONSUMER_HOST}/subscribing/{request.username}"
     params = {"chat": request.chat}
-    requests.get(url, params=params)
+    requests.post(url, params=params)
     return {"status": "ok"}
 
 
