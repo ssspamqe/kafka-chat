@@ -9,6 +9,12 @@
   overflow: hidden;
 }
 
+.loading {
+  padding: 1rem;
+  text-align: center;
+  color: #666;
+}
+
 .header {
   padding: 1rem 1.25rem;
   display: flex;

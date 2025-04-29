@@ -1,91 +1,117 @@
 import { apiService } from "./apiService";
+import { config } from "../config";
 
 class MessageService {
   constructor() {
     this.subscribers = new Set();
+    this.currentRoom = null;
+    this.username = null;
+    this.socket = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 3;
   }
 
-  async connectToGlobalChat() {
-    console.log("Connecting to global chat consumer...");
-    await apiService.connectToConsumer('/send-message/client/global');
-    apiService.onMessage((message) => {
-      console.log("Global chat message:", message);
-      this.handleMessage(message);
-    });
-  }
-  
-  async connectToRoom(roomId) {
-    console.log(`Connecting to room ${roomId} consumer...`);
-    await apiService.connectToConsumer(`/send-message/client/${roomId}`);
-    apiService.onMessage((message) => {
-      console.log(`Room ${roomId} message:`, message);
-      this.handleMessage(message);
-    });
-  }
-
-async loadRoomMessages(roomId) {
-  try {
-    const response = await fetch(`/api/messages/${roomId || 'global'}`);
-    return await response.json();
-  } catch {
-    return [
-      {
-        text: "Welcome to the chat!",
-        sender: "System",
-        timestamp: new Date().toISOString()
+  async connect(username, room = "global") {
+    try {
+      if (
+        this.socket &&
+        this.username === username &&
+        this.currentRoom === room
+      ) {
+        return;
       }
-    ];
-  }
-}
 
-  sendGlobalMessage({ text, sender, tag = "general" }) {
-    apiService.connectToProducer('/send-message/global')
-      .then(() => {
-        apiService.send({
-          type: "MESSAGE",
-          sender,
-          text,
-          tag,
-          timestamp: new Date().toISOString()
-        });
-      });
+      this.disconnect();
+
+      await apiService.sendRequest(
+        "/subscription",
+        { chat: room, username },
+        "POST"
+      );
+
+      await this._setupWebSocket(username);
+    } catch (error) {
+      console.error("Connection error:", error);
+      throw error;
+    }
   }
 
-  sendRoomMessage(roomId, { text, sender, tag = "general" }) {
-    apiService.connectToProducer(`/send-message/chat/${roomId}`)
-      .then(() => {
-        apiService.send({
-          type: "MESSAGE",
-          chat: roomId,
-          sender,
-          text,
-          tag,
-          timestamp: new Date().toISOString()
-        });
-      });
+  async _setupWebSocket(username) {
+    return new Promise((resolve, reject) => {
+      this.socket = new WebSocket(
+        `ws://${config.SERVICE_HOST}:${config.CONSUMER_HOST}/receive-messages/user/${username}`
+      );
+
+      this.socket.onopen = () => {
+        this.reconnectAttempts = 0;
+        resolve();
+      };
+
+      this.socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          this.subscribers.forEach((cb) => cb(message));
+        } catch (error) {
+          console.error("Message parsing error:", error);
+        }
+      };
+
+      this.socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        reject(error);
+      };
+
+      this.socket.onclose = () => {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          setTimeout(() => {
+            this.reconnectAttempts++;
+            console.log(`Reconnecting (attempt ${this.reconnectAttempts})...`);
+            this._setupWebSocket(this.username);
+          }, 1000 * this.reconnectAttempts);
+        }
+      };
+    });
+  }
+
+  async sendMessage(roomId, message) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      throw new Error("Not connected to chat");
+    }
+
+    try {
+      return await apiService.sendRequest(
+        `/send-message/chat/${roomId}`,
+        {
+          text: message.text,
+          sender: message.sender,
+          tag: message.tag || null,
+          timestamp: new Date().toISOString(),
+        },
+        "POST",
+        "PRODUCER"
+      );
+    } catch (error) {
+      console.error("Message sending failed:", error);
+      throw error;
+    }
   }
 
   subscribe(callback) {
+    if (typeof callback !== "function") {
+      throw new Error("Callback must be a function");
+    }
     this.subscribers.add(callback);
     return () => this.subscribers.delete(callback);
   }
 
-  formatIncomingMessage(rawMessage) {
-    return {
-      text: rawMessage.text,
-      sender: rawMessage.sender,
-      timestamp: rawMessage.timestamp || new Date().toISOString()
-    };
-  }
-
-  handleMessage(rawMessage) {
-    const message = this.formatIncomingMessage(rawMessage);
-    this.subscribers.forEach(callback => callback(message));
-  }
-
   disconnect() {
-    apiService.disconnect();
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+    }
     this.subscribers.clear();
+    this.username = null;
+    this.currentRoom = null;
   }
 }
 

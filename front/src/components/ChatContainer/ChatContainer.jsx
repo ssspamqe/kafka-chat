@@ -37,21 +37,17 @@ const ChatContainer = () => {
   }, [darkTheme]);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const roomMessages = await messageService.loadRoomMessages(
-          currentRoom || "global"
-        );
-        setMessages(roomMessages);
+    if (!user) return;
 
-        if (currentRoom) {
-          await messageService.connectToRoom(currentRoom);
-        } else {
-          await messageService.connectToGlobalChat();
-        }
+    const initializeChat = async () => {
+      try {
+        await messageService.connect(user.username, "global");
 
         const unsubscribe = messageService.subscribe((newMessage) => {
-          if (!messages.some((m) => m.timestamp === newMessage.timestamp)) {
+          if (
+            (currentRoom && newMessage.chat === currentRoom) ||
+            (!currentRoom && newMessage.chat === "global")
+          ) {
             setMessages((prev) => [...prev, newMessage]);
           }
         });
@@ -61,36 +57,33 @@ const ChatContainer = () => {
           messageService.disconnect();
         };
       } catch (error) {
-        console.error("Connection error:", error);
+        console.error("Chat initialization error:", error);
       }
     };
 
-    loadData();
-  }, [currentRoom]);
+    initializeChat();
+  }, [user, currentRoom]);
 
   const handleSendMessage = (content) => {
     if (!user) return;
 
-    let message = {};
+    const message = {
+      text: typeof content === "string" ? content : content.text,
+      sender: user.username,
+      tag: user.tag || null,
+      timestamp: new Date().toISOString(),
+    };
 
-    if (typeof content === "string") {
-      message = {
-        text: content,
-        sender: user.username,
-        timestamp: new Date().toISOString(),
-      };
-    } else {
-      message = {
-        text: content.text,
-        sender: content.sender || user.username,
-        timestamp: content.timestamp || new Date().toISOString(),
-      };
-    }
-    setMessages((prev) => [...prev, message]);
-    currentRoom
-      ? messageService.sendRoomMessage(currentRoom, message)
-      : messageService.sendGlobalMessage(message);
+    const targetRoom = currentRoom || "global";
+    messageService.sendMessage(targetRoom, message);
   };
+
+  const handleRoomChange = async (room) => {
+    setCurrentRoom(room);
+    setMessages([]);
+    await messageService.connect(user.username, room || "global");
+  };
+
   return (
     <div className={`chatApp ${darkTheme ? "dark-theme" : ""}`}>
       <button
@@ -118,13 +111,7 @@ const ChatContainer = () => {
           </div>
         </div>
 
-        <RoomList
-          currentRoom={currentRoom}
-          onSelectRoom={(room) => {
-            setCurrentRoom(room);
-            setIsMobileMenuOpen(false);
-          }}
-        />
+        <RoomList currentRoom={currentRoom} onSelectRoom={handleRoomChange} />
       </div>
       <div className="mainContent">
         <div className="chatHeader">
