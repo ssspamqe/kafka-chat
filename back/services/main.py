@@ -16,15 +16,16 @@ client = None
 db = None
 users_repository = None
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global client, db, users_repository
-    
+
     client = MongoClient(Variables.MONGO_CONNECTION_STRING)
     db = client[Variables.MONGO_DB]
-    
+
     logger.info("Running migrations on startup...")
-    
+
     do_migrations(
         db,
         collections=["users", "messages", "chats"]
@@ -67,7 +68,7 @@ app.add_middleware(
 async def create_user(username: str, request: Request):
     if request.method == "OPTIONS":
         return Response(status_code=204)
-    
+
     if users_repository.save_user_with_username(username):
         return {"status": "ok", "username": username}
     raise HTTPException(
@@ -76,8 +77,9 @@ async def create_user(username: str, request: Request):
         headers={"Access-Control-Allow-Origin": "*"}
     )
 
+
 @app.post("/messages")
-async def create_message(message:ChatMessage):
+async def create_message(message: ChatMessage):
     return {
         "status": "not implemented"
     }
@@ -91,51 +93,60 @@ async def create_message(message:ChatMessage):
     # })
     # return {"status": "ok"}
 
+
 @app.get("/messages/{chat}")
 async def get_messages(chat: str):
     return {"status": "not implemented"}
 
+
 @app.get("/user/{username}")
-async def get_user(username:str):
+async def get_user(username: str):
     user = users_repository.find_by_username(username)
     return user
 
+
 @app.post("/user/{username}")
-async def create_user(username:str):
+async def create_user(username: str):
     if users_repository.save_user_with_username(username):
         return {"status": "ok"}
     else:
         return {"status": "user already exists"}
 
+
 class UpdateTagRequest(BaseModel):
     tag: str
 
+
 @app.post("/tag/{username}")
-async def create_tag(username:str, request: UpdateTagRequest):
+async def create_tag(username: str, request: UpdateTagRequest):
     if users_repository.save_tag(username, request.tag):
         return {"status": "ok"}
     else:
         return {"status": "user not found"}
 
+
 @app.get("/tag/{username}")
-async def get_tag(username:str):
+async def get_tag(username: str):
     tag = users_repository.get_tag(username)
     if tag:
         return {"tag": tag}
     else:
         return {"status": "user not found"}
 
+
 class CreateSubscriptionRequest(BaseModel):
     chat: str
     username: str
 
+
 @app.post("/subscription")
 async def create_subscription(request: CreateSubscriptionRequest):
     users_repository.add_chat_subscription(request.username, request.chat)
-    url = f"http://{Variables.PRODUCER_HOST}/subscribing/{request.username}"
+    url = f"http://{Variables.CONSUMER_HOST}/subscribing/{request.username}"
     params = {"chat": request.chat}
     requests.get(url, params=params)
     return {"status": "ok"}
+
 
 @app.get("/openapi.json", include_in_schema=False)
 def get_open_api_schema():

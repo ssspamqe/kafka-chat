@@ -1,7 +1,7 @@
 KAFKA_BOOTSTRAP_SERVERS = "kafka:9092"
 KAFKA_GLOBAL_TOPIC = "kafka.chat.global"
 KAFKA_CHAT_TOPIC_PREFIX = "kafka.chat"
-KAFKA_OFFSET_RESET = "latest"
+KAFKA_OFFSET_RESET = "earliest"
 KAFKA_CONSUMER_GROUP = "my_consumer_group"
 MONGODB_SERVICE_HOST = "mongo-service"
 MONGODB_PORT = 8002
