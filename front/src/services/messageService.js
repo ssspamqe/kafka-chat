@@ -12,6 +12,7 @@ class MessageService {
     this.maxReconnectAttempts = 3;
   }
 
+
   async connect(username) {
     try {
       if (
@@ -85,27 +86,40 @@ class MessageService {
       throw error;
     }
   }
+  async unsubscribeFromRoom(roomId) {
+    if (!this.username || !this.currentRooms.has(roomId)) return;
+  
+    try {
+      await apiService.sendRequest(
+        "/unsubscribe",
+        { chat: roomId, username: this.username },
+        "POST"
+      );
+      this.currentRooms.delete(roomId);
+    } catch (error) {
+      console.error("Failed to unsubscribe from room:", error);
+      throw error;
+    }
+  }
 
+  
   async sendMessage(roomId, message) {
     try {
       if (!this.producerSocket || this.producerSocket.readyState !== WebSocket.OPEN) {
-        // throw new Error("Not connected to chat");
         this.producerSocket = new WebSocket(
           `ws://${config.SERVICE_HOST}:${config.PRODUCER_HOST}/send-message/chat/${roomId}`
         );
-
-        await new Promise((resolve) => {
+  
+        await new Promise((resolve, reject) => {
           this.producerSocket.onopen = resolve;
+          this.producerSocket.onerror = reject;
         });
       }
-
-      this.producerSocket.send(
-        JSON.stringify({
-          text: message.text,
-          sender: message.sender,
-          tag: message.tag || null,
-        })
-      );
+  
+      this.producerSocket.send(JSON.stringify({
+        ...message,
+        chat: roomId 
+      }));
     } catch (error) {
       console.error("Message sending failed:", error);
       throw error;

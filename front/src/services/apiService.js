@@ -1,5 +1,6 @@
 import { config } from "../config";
 
+
 class ApiService {
   constructor() {
     this.producerSocket = null;
@@ -7,6 +8,7 @@ class ApiService {
     this.messageCallbacks = [];
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
+    this.availableTags = []; 
   }
 
   async connectToConsumer(endpoint) {
@@ -51,6 +53,68 @@ class ApiService {
       };
     });
   }
+  async fetchTags() {
+    try {
+      const response = await this.sendRequest(
+        "/tags", 
+        {}, 
+        "GET", 
+        "MONGO"
+      );
+      this.availableTags = response.tags || [];
+      return this.availableTags;
+    } catch (error) {
+      console.error("Failed to fetch tags:", error);
+      return [];
+    }
+  }
+  async createTag(tagData) {
+    try {
+      const response = await this.sendRequest(
+        "/tags",
+        tagData,
+        "POST",
+        "MONGO"
+      );
+     
+      this.availableTags = [...this.availableTags, response];
+      return response;
+    } catch (error) {
+      console.error("Failed to create tag:", error);
+      throw error;
+    }
+  }
+  async updateUserTag(username, tag) {
+    try {
+      return await this.sendRequest(
+        `/users/${username}/tags`,
+        { tag },
+        "POST",
+        "MONGO"
+      );
+    } catch (error) {
+      console.error("Failed to update user tag:", error);
+      throw error;
+    }
+  }
+
+  async getUserTags(username) {
+    try {
+      return await this.sendRequest(
+        `/users/${username}/tags`,
+        {},
+        "GET",
+        "MONGO"
+      );
+    } catch (error) {
+      console.error("Failed to get user tags:", error);
+      return { current_tag: null, available_tags: [] };
+    }
+  }
+
+
+
+
 
   async sendRequest(
     endpoint,
@@ -89,6 +153,7 @@ class ApiService {
       throw error;
     }
   }
+  
 
   onMessage(callback) {
     this.messageCallbacks.push(callback);
