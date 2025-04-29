@@ -1,5 +1,6 @@
 import EmojiPicker from 'emoji-picker-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { authService } from '../../services/authService';
 import './MessageInput.css';
 
 const MessageInput = ({ onSend }) => {
@@ -12,11 +13,16 @@ const MessageInput = ({ onSend }) => {
     setShowEmojiPicker(false);
     inputRef.current.focus();
   };
+  
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      onSend(message.trim());
+      onSend({
+        text: message.trim(),
+        sender: authService.getCurrentUser()?.username,
+        timestamp: new Date().toISOString()
+      });
       setMessage('');
     }
   };
