@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from custom_websockets.endpoints.send_client_message import router as client_router
 from custom_websockets.endpoints.subscribe import router as subscribe_router 
 from custom_websockets.endpoints.send_client_message import initialize_state as client_init_state
@@ -26,10 +27,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(client_router)
 app.include_router(subscribe_router)
 
 @app.get("/health")
 async def health_check():
     return {"status": "Consumer is running"}
-

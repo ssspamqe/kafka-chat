@@ -22,12 +22,12 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
   useEffect(() => {
     const loadRooms = async () => {
       if (!user) return;
-      
+
       try {
         const userData = await apiService.sendRequest(
           `/user/${user.username}`,
           {},
-          'GET'
+          "GET"
         );
         setRooms(["global", ...(userData.chats || [])]);
       } catch (error) {
@@ -40,26 +40,25 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
 
   const handleJoinRoom = async () => {
     const roomName = newRoomName.trim();
-    if (!roomName || !user) return;
-  
-    try {   
-      setIsLoadingRooms(true);   
+    if (!roomName || !user.username) return;
+
+    try {
+      setIsLoadingRooms(true);
       await apiService.sendRequest(
         "/subscription",
         { chat: roomName, username: user.username },
         "POST",
         "MONGO"
       );
-  
+
       setRooms((prev) => [...new Set([...prev, roomName])]);
       setNewRoomName("");
       setIsJoinRoom(false);
       onSelectRoom(roomName);
-      
     } catch (error) {
       setErrorMessage(
-        error.message.includes("exists") 
-          ? "Room already exists" 
+        error.message.includes("exists")
+          ? "Room already exists"
           : "Failed to join room. Please try later."
       );
     } finally {

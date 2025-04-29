@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, Response
 from pymongo import MongoClient
 from models.mongo_models import ChatMessage
 from data.mongo_migration import do_migrations
@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from config.config import Variables
 import requests
 from fastapi.openapi.utils import get_openapi
-
+from fastapi.middleware.cors import CORSMiddleware
 
 client = None
 db = None
@@ -53,6 +53,28 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["POST", "OPTIONS"],
+    allow_headers=["*"],
+    expose_headers=["*"]
+)
+
+
+@app.api_route("/user/{username}", methods=["POST", "OPTIONS"])
+async def create_user(username: str, request: Request):
+    if request.method == "OPTIONS":
+        return Response(status_code=204)
+    
+    if users_repository.save_user_with_username(username):
+        return {"status": "ok", "username": username}
+    raise HTTPException(
+        status_code=400,
+        detail="User already exists",
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
 
 @app.post("/messages")
 async def create_message(message:ChatMessage):
