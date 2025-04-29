@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Login.css';
 
-const Login = ({onLogin}) => {
+const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -12,7 +12,12 @@ const Login = ({onLogin}) => {
     e.preventDefault();
     
     if (!username.trim()) {
-      setError('Please enter a name');
+      setError('Please enter a username');
+      return;
+    }
+
+    if (username.length < 3) {
+      setError('Username must be at least 3 characters');
       return;
     }
 
@@ -22,16 +27,18 @@ const Login = ({onLogin}) => {
     try {
       await login(username);
       onLogin();
-    } catch (err) {
-      setError(err.message || 'Login failed');
+    } catch (error) {
+      setError(error.message.includes('already exists') 
+        ? 'Username already taken' 
+        : 'Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const generateRandomName = () => {
-    const adjectives = ['Happy', 'Clever', 'Swift', 'Gentle', 'Brave', 'Calm', 'Eager', 'Jolly'];
-    const nouns = ['Fox', 'Bear', 'Eagle', 'Dolphin', 'Tiger', 'Wolf', 'Lion', 'Owl', 'Beaver', 'Hippo', 'Panda'];
+    const adjectives = ['Happy', 'Clever', 'Swift', 'Gentle', 'Brave', 'Calm'];
+    const nouns = ['Fox', 'Bear', 'Eagle', 'Dolphin', 'Tiger', 'Owl'];
     const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     setUsername(`${randomAdj}${randomNoun}${Math.floor(Math.random() * 100)}`);

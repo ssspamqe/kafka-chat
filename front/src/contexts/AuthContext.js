@@ -1,22 +1,24 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(authService.getCurrentUser());
 
-  useEffect(() => {
-    const unsubscribe = authService.subscribe(setUser);
-    return () => unsubscribe();
-  }, []);
-
-  const login = (username) => {
-    authService.login(username);
+  const login = async (username) => {
+    try {
+      const user = await authService.login(username);
+      setUser(user);
+      return user;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = () => {
     authService.logout();
+    setUser(null);
   };
 
   return (
@@ -26,10 +28,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);
