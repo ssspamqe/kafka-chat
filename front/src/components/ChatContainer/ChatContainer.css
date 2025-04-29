@@ -432,6 +432,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  margin-top: 2px;
 }
 
 .editTagButton {
@@ -487,3 +488,51 @@
   padding: 5px 10px;
   cursor: pointer;
 }
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+  gap: 8px;
+}
+
+.checkboxContainer input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.checkboxContainer label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+/* Стили для чекбокса */
+.tagCheckbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  margin-right: 5px;
+}
+
+.tagCheckbox:checked {
+  background-color: var(--primary);
+  border-color: var(--primary-dark);
+}
+
+.tagCheckbox:checked::after {
+  content: "✓";
+  position: absolute;
+  color: white;
+  font-size: 12px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tagCheckbox:hover {
+  border-color: var(--primary);
+}
+

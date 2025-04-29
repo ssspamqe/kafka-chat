@@ -36,24 +36,23 @@ async login(username, tag = null) {
     throw error;
   }
 }
-async updateUserTag(newTag) {
+async updateUserTag(tag) {
   try {
     const user = this.getCurrentUser();
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-
+    if (!user) throw new Error("User not authenticated");
+    
     const response = await apiService.sendRequest(
-      "/user/update-tag",
-      { username: user.username, tag: newTag },
+      "/users/update-tag", 
+      { 
+        username: user.username,
+        tag: tag || null // Разрешаем null значение
+      },
       "PATCH"
     );
-
-  
-    user.tag = newTag;
-    this.currentUser = user;
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
+    
+    // Обновляем локальные данные
+    this.currentUser = { ...user, tag };
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.currentUser));
     
     return response;
   } catch (error) {
@@ -86,26 +85,23 @@ async updateUserTag(newTag) {
     return !!this.getCurrentUser();
   }
 
-  async updateUserTag(newTag) {
+  async updateUserTag(tag) {
     try {
       const user = this.getCurrentUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
+      if (!user) throw new Error("User not authenticated");
+      
       const response = await apiService.sendRequest(
         "/users/update-tag",
-        { username: user.username, tag: newTag },
-        "POST"
+        { username: user.username, tag },
+        "PATCH"
       );
       
-     
-      this.currentUser = { ...user, tag: newTag };
+      this.currentUser = { ...user, tag };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.currentUser));
       
       return response;
     } catch (error) {
-      console.error("Error updating user tag:", error);
+      console.error("Error updating tag:", error);
       throw error;
     }
   }

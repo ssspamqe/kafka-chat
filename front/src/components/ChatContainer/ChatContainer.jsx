@@ -16,24 +16,29 @@ const ChatContainer = () => {
   const [, forceUpdate] = useReducer(x => x + 1, 0);
   
   const user = authService.getCurrentUser();
-
+  const [showTag, setShowTag] = useState(true);
   useEffect(() => {
     if (user?.tag) {
       setNewTag(user.tag);
     }
   }, [user]);
-
   const handleUpdateTag = async () => {
     try {
-      await authService.updateUserTag(newTag);
+      console.log("Saving tag:", newTag); 
+      
+      const response = await authService.updateUserTag(newTag);
+      console.log("Update response:", response); 
+      
       setIsEditingTag(false);
       const updatedUser = authService.getCurrentUser();
+      console.log("Updated user:", updatedUser); 
+      
       forceUpdate();
     } catch (error) {
       console.error("Failed to update tag:", error);
+      alert(`Failed to update tag: ${error.message}`); 
     }
   };
-
   useEffect(() => {
     const prefersDark =
       window.matchMedia &&
@@ -144,6 +149,13 @@ const ChatContainer = () => {
           <div className="userInfo">
             <span className="username">{user?.username}</span>
             <div className="tagContainer">
+            <input
+    type="checkbox"
+    checked={showTag}
+    onChange={(e) => setShowTag(e.target.checked)}
+    className="tagCheckbox"
+    title={showTag ? "Hide tag" : "Show tag"}
+  />
               <span className="userTag">{user?.tag || '#'}</span>
               <button 
                 className="editTagButton"
@@ -193,6 +205,16 @@ const ChatContainer = () => {
               onChange={(e) => setNewTag(e.target.value)}
               placeholder="Enter new tag"
             />
+            <div className="checkboxContainer">
+        <input
+          type="checkbox"
+          id="showTagCheckbox"
+          checked={showTag}
+          onChange={(e) => setShowTag(e.target.checked)}
+        />
+        <label htmlFor="showTagCheckbox">Show tag in chat</label>
+        </div>
+            
             <div className="modalButtons">
               <button onClick={() => setIsEditingTag(false)}>Cancel</button>
               <button onClick={handleUpdateTag}>Save</button>
