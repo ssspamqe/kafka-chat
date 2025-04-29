@@ -4,4 +4,4 @@ KAFKA_CHAT_TOPIC_PREFIX = "kafka.chat"
 KAFKA_OFFSET_RESET = "latest"
 KAFKA_CONSUMER_GROUP = "my_consumer_group"
 MONGODB_SERVICE_HOST = "mongo-service"
-MONGODB_PORT = 8000
+MONGODB_PORT = 8002

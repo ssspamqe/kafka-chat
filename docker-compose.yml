@@ -55,7 +55,7 @@ services:
     volumes:
       - ./back/consumer:/app
     ports:
-      - "8001:8000"
+      - "8001:8001"
     networks:
       - backend
 
@@ -72,7 +72,7 @@ services:
   mongo-service:
     build: ./back/services
     ports:
-      - "8002:8000"
+      - "8002:8002"
     networks:
       - backend
     depends_on:
