@@ -74,10 +74,11 @@ const ChatContainer = () => {
       sender: user.username,
       tag: user.tag || null,
       timestamp: new Date().toISOString(),
+      chat: currentRoom || "global"
     };
 
-    const targetRoom = currentRoom || "global";
-    messageService.sendMessage(targetRoom, message);
+    setMessages(prev => [...prev, message]);
+    messageService.sendMessage(message.chat, message);
   };
 
     const handleRoomChange = async (room) => {

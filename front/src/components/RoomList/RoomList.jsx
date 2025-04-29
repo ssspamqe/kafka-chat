@@ -30,7 +30,9 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
           {},
           "GET"
         );
-        setRooms(["global", ...(userData.chats || [])]);
+
+        const userRooms = ["global", ...(userData.chats || [])];
+        setRooms(userRooms);
       } catch (error) {
         console.error("Failed to load rooms:", error);
       }
@@ -57,6 +59,22 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
           ? "Room already exists"
           : "Failed to join room. Please try later."
       );
+    } finally {
+      setIsLoadingRooms(false);
+    }
+  };
+
+  const handleRoomSelect = async (room) => {
+    if (room === currentRoom) return;
+
+    try {      
+      if (!messageService.currentRooms.has(room)) {
+        await messageService.subscribeToRoom(room);
+      }
+      
+      onSelectRoom(room === "global" ? null : room);
+    } catch (error) {
+      setErrorMessage(`Failed to enter ${room}`);
     } finally {
       setIsLoadingRooms(false);
     }
@@ -96,7 +114,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
                   className={`${styles.room} ${
                     currentRoom === room ? styles.active : ""
                   }`}
-                  onClick={() => onSelectRoom(room)}
+                  onClick={() => handleRoomSelect(room)}
                 >
                   <span className={styles.roomIcon}>#</span>
                   {room}

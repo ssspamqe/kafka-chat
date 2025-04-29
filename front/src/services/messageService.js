@@ -3,38 +3,34 @@ import { config } from "../config";
 
 class MessageService {
   constructor() {
-    this.subscribers = new Set();
-    this.currentRooms = new Set(['global']); 
+    this.messageSubscribers = new Set();
+    this.roomSubscriptions = new Set(['global']); 
     this.username = null;
     this.consumerSocket = null;
-    this.producerSocket = null;
+    this.producerSockets = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 3;
+    this.pendingMessages = new Map();
   }
 
-
   async connect(username) {
+    if (this.consumerSocket && this.username === username) {
+      return;
+    }
+
+    this.disconnect();
+    this.username = username;
+
     try {
-      if (
-        this.consumerSocket &&
-        this.username === username
-      ) {
-        return;
-      }
-
-      this.disconnect();
-
-      this.username = username;
-
-      await this._setupWebSocket();
-      await this.subscribeToRoom('global');
+      await this._setupConsumerSocket();
+      await this._ensureRoomSubscription('global');
     } catch (error) {
       console.error("Connection error:", error);
       throw error;
     }
   }
 
-  async _setupWebSocket() {
+  async _setupConsumerSocket() {
     return new Promise((resolve, reject) => {
       this.consumerSocket = new WebSocket(
         `ws://${config.SERVICE_HOST}:${config.CONSUMER_HOST}/receive-messages/user/${this.username}`
@@ -48,7 +44,17 @@ class MessageService {
       this.consumerSocket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          this.subscribers.forEach((cb) => cb(message));
+          console.log("Received message:", message);
+          
+          if (!this.roomSubscriptions.has(message.chat)) {
+            if (!this.pendingMessages.has(message.chat)) {
+              this.pendingMessages.set(message.chat, []);
+            }
+            this.pendingMessages.get(message.chat).push(message);
+            return;
+          }
+
+          this._notifySubscribers(message);
         } catch (error) {
           console.error("Message parsing error:", error);
         }
@@ -64,7 +70,7 @@ class MessageService {
           setTimeout(() => {
             this.reconnectAttempts++;
             console.log(`Reconnecting (attempt ${this.reconnectAttempts})...`);
-            this._setupWebSocket(this.username);
+            this._setupConsumerSocket();
           }, 1000 * this.reconnectAttempts);
         }
       };
@@ -72,7 +78,10 @@ class MessageService {
   }
 
   async subscribeToRoom(roomId) {
-    if (!this.username || this.currentRooms.has(roomId)) return;
+    if (!this.username || this.roomSubscriptions.has(roomId)) {
+      this._flushPendingMessages(roomId);
+      return;
+    }
 
     try {
       await apiService.sendRequest(
@@ -80,48 +89,53 @@ class MessageService {
         { chat: roomId, username: this.username },
         "POST"
       );
-      this.currentRooms.add(roomId);
+      
+      this.roomSubscriptions.add(roomId);
+      
+      this._flushPendingMessages(roomId);
     } catch (error) {
       console.error("Failed to subscribe to room:", error);
       throw error;
     }
   }
-  // async unsubscribeFromRoom(roomId) {
-  //   if (!this.username || !this.currentRooms.has(roomId)) return;
-  
-  //   try {
-  //     await apiService.sendRequest(
-  //       "/unsubscribe",
-  //       { chat: roomId, username: this.username },
-  //       "POST"
-  //     );
-  //     this.currentRooms.delete(roomId);
-  //   } catch (error) {
-  //     console.error("Failed to unsubscribe from room:", error);
-  //     throw error;
-  //   }
-  // }
 
-  
+  _flushPendingMessages(roomId) {
+    if (this.pendingMessages.has(roomId)) {
+      const messages = this.pendingMessages.get(roomId);
+      messages.forEach(msg => this._notifySubscribers(msg));
+      this.pendingMessages.delete(roomId);
+    }
+  }
+
+  _notifySubscribers(message) {
+    this.messageSubscribers.forEach(cb => cb(message));
+  }
+
   async sendMessage(roomId, message) {
+    if (!this.username) throw new Error("Not authenticated");
+
     try {
-      if (!this.producerSocket || this.producerSocket.readyState !== WebSocket.OPEN) {
-        this.producerSocket = new WebSocket(
+      if (!this.producerSockets.has(roomId)) {
+        const socket = new WebSocket(
           `ws://${config.SERVICE_HOST}:${config.PRODUCER_HOST}/send-message/chat/${roomId}`
         );
-  
+
         await new Promise((resolve, reject) => {
-          this.producerSocket.onopen = resolve;
-          this.producerSocket.onerror = reject;
+          socket.onopen = resolve;
+          socket.onerror = reject;
         });
+
+        this.producerSockets.set(roomId, socket);
       }
-  
-      this.producerSocket.send(JSON.stringify({
+
+      const socket = this.producerSockets.get(roomId);
+      socket.send(JSON.stringify({
         ...message,
-        chat: roomId 
+        chat: roomId
       }));
     } catch (error) {
       console.error("Message sending failed:", error);
+      this.producerSockets.delete(roomId);
       throw error;
     }
   }
@@ -130,8 +144,12 @@ class MessageService {
     if (typeof callback !== "function") {
       throw new Error("Callback must be a function");
     }
-    this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
+    this.messageSubscribers.add(callback);
+    return () => this.messageSubscribers.delete(callback);
+  }
+
+  isSubscribed(roomId) {
+    return this.roomSubscriptions.has(roomId);
   }
 
   disconnect() {
@@ -139,13 +157,15 @@ class MessageService {
       this.consumerSocket.close();
       this.consumerSocket = null;
     }
-    if (this.producerSocket) {
-      this.producerSocket.close();
-      this.producerSocket = null;
-    }
-    this.subscribers.clear();
+    
+    this.producerSockets.forEach(socket => socket.close());
+    this.producerSockets.clear();
+    
+    this.messageSubscribers.clear();
+    this.pendingMessages.clear();
     this.username = null;
-    this.currentRoom = null;
+    this.roomSubscriptions.clear();
+    this.roomSubscriptions.add('global');
   }
 }
 
