@@ -45,12 +45,11 @@ async updateUserTag(tag) {
       "/users/update-tag", 
       { 
         username: user.username,
-        tag: tag || null // Разрешаем null значение
+        tag: tag || null
       },
       "PATCH"
     );
     
-    // Обновляем локальные данные
     this.currentUser = { ...user, tag };
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.currentUser));
     
@@ -85,26 +84,6 @@ async updateUserTag(tag) {
     return !!this.getCurrentUser();
   }
 
-  async updateUserTag(tag) {
-    try {
-      const user = this.getCurrentUser();
-      if (!user) throw new Error("User not authenticated");
-      
-      const response = await apiService.sendRequest(
-        "/users/update-tag",
-        { username: user.username, tag },
-        "PATCH"
-      );
-      
-      this.currentUser = { ...user, tag };
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.currentUser));
-      
-      return response;
-    } catch (error) {
-      console.error("Error updating tag:", error);
-      throw error;
-    }
-  }
   updateCurrentUser(updatedUser) {
     this.currentUser = updatedUser;
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedUser));
