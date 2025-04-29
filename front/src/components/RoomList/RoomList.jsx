@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { authService } from "../../services/authService";
 import { apiService } from "../../services/apiService";
 import styles from "./RoomList.module.css";
+import { messageService } from "../../services/messageService";
 
 const RoomList = ({ currentRoom, onSelectRoom }) => {
   const [rooms, setRooms] = useState(["global"]);
@@ -44,12 +45,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
 
     try {
       setIsLoadingRooms(true);
-      await apiService.sendRequest(
-        "/subscription",
-        { chat: roomName, username: user.username },
-        "POST",
-        "MONGO"
-      );
+      await messageService.subscribeToRoom(roomName);
 
       setRooms((prev) => [...new Set([...prev, roomName])]);
       setNewRoomName("");

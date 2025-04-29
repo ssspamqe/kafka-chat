@@ -4,50 +4,46 @@ import { config } from "../config";
 class MessageService {
   constructor() {
     this.subscribers = new Set();
-    this.currentRoom = null;
+    this.currentRooms = new Set(['global']); 
     this.username = null;
-    this.socket = null;
+    this.consumerSocket = null;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 3;
   }
 
-  async connect(username, room = "global") {
+  async connect(username) {
     try {
       if (
-        this.socket &&
-        this.username === username &&
-        this.currentRoom === room
+        this.consumerSocket &&
+        this.username === username
       ) {
         return;
       }
 
       this.disconnect();
 
-      await apiService.sendRequest(
-        "/subscription",
-        { chat: room, username },
-        "POST"
-      );
+      this.username = username;
 
-      await this._setupWebSocket(username);
+      await this._setupWebSocket();
+      await this.subscribeToRoom('global');
     } catch (error) {
       console.error("Connection error:", error);
       throw error;
     }
   }
 
-  async _setupWebSocket(username) {
+  async _setupWebSocket() {
     return new Promise((resolve, reject) => {
-      this.socket = new WebSocket(
-        `ws://${config.SERVICE_HOST}:${config.CONSUMER_HOST}/receive-messages/user/${username}`
+      this.consumerSocket = new WebSocket(
+        `ws://${config.SERVICE_HOST}:${config.CONSUMER_HOST}/receive-messages/user/${this.username}`
       );
 
-      this.socket.onopen = () => {
+      this.consumerSocket.onopen = () => {
         this.reconnectAttempts = 0;
         resolve();
       };
 
-      this.socket.onmessage = (event) => {
+      this.consumerSocket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
           this.subscribers.forEach((cb) => cb(message));
@@ -56,12 +52,12 @@ class MessageService {
         }
       };
 
-      this.socket.onerror = (error) => {
+      this.consumerSocket.onerror = (error) => {
         console.error("WebSocket error:", error);
         reject(error);
       };
 
-      this.socket.onclose = () => {
+      this.consumerSocket.onclose = () => {
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           setTimeout(() => {
             this.reconnectAttempts++;
@@ -73,22 +69,41 @@ class MessageService {
     });
   }
 
-  async sendMessage(roomId, message) {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      throw new Error("Not connected to chat");
-    }
+  async subscribeToRoom(roomId) {
+    if (!this.username || this.currentRooms.has(roomId)) return;
 
     try {
-      return await apiService.sendRequest(
-        `/send-message/chat/${roomId}`,
-        {
+      await apiService.sendRequest(
+        "/subscription",
+        { chat: roomId, username: this.username },
+        "POST"
+      );
+      this.currentRooms.add(roomId);
+    } catch (error) {
+      console.error("Failed to subscribe to room:", error);
+      throw error;
+    }
+  }
+
+  async sendMessage(roomId, message) {
+    try {
+      if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+        // throw new Error("Not connected to chat");
+        this.producerSocket = new WebSocket(
+          `ws://${config.SERVICE_HOST}:${config.PRODUCER_HOST}/send-message/chat/${roomId}`
+        );
+
+        await new Promise((resolve) => {
+          this.producerSocket.onopen = resolve;
+        });
+      }
+
+      this.producerSocket.send(
+        JSON.stringify({
           text: message.text,
           sender: message.sender,
           tag: message.tag || null,
-          timestamp: new Date().toISOString(),
-        },
-        "POST",
-        "PRODUCER"
+        })
       );
     } catch (error) {
       console.error("Message sending failed:", error);

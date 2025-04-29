@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback  } from "react";
 import { messageService } from "../../services/messageService";
 import { authService } from "../../services/authService";
 import MessageList from "../MessageList/MessageList";
@@ -36,22 +36,24 @@ const ChatContainer = () => {
     }
   }, [darkTheme]);
 
+  const handleNewMessage = useCallback((newMessage) => {
+    if (
+      (currentRoom && newMessage.chat === currentRoom) ||
+      (!currentRoom && newMessage.chat === "global")
+    ) {
+      setMessages((prev) => [...prev, newMessage]);
+    }
+  }, [currentRoom]);
+  
   useEffect(() => {
     if (!user) return;
-
+  
     const initializeChat = async () => {
       try {
-        await messageService.connect(user.username, "global");
-
-        const unsubscribe = messageService.subscribe((newMessage) => {
-          if (
-            (currentRoom && newMessage.chat === currentRoom) ||
-            (!currentRoom && newMessage.chat === "global")
-          ) {
-            setMessages((prev) => [...prev, newMessage]);
-          }
-        });
-
+        await messageService.connect(user.username);
+  
+        const unsubscribe = messageService.subscribe(handleNewMessage);
+  
         return () => {
           unsubscribe();
           messageService.disconnect();
@@ -60,9 +62,9 @@ const ChatContainer = () => {
         console.error("Chat initialization error:", error);
       }
     };
-
+  
     initializeChat();
-  }, [user, currentRoom]);
+  }, [user, handleNewMessage]);
 
   const handleSendMessage = (content) => {
     if (!user) return;
@@ -78,10 +80,17 @@ const ChatContainer = () => {
     messageService.sendMessage(targetRoom, message);
   };
 
-  const handleRoomChange = async (room) => {
-    setCurrentRoom(room);
-    setMessages([]);
-    await messageService.connect(user.username, room || "global");
+    const handleRoomChange = async (room) => {
+      setCurrentRoom(room);
+      setMessages([]);
+
+      if (room && room !== 'global') {
+        try {
+          await messageService.subscribeToRoom(room);
+        } catch (error) {
+          console.error("Failed to change room:", error);
+        }
+      }
   };
 
   return (
