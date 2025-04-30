@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { authService } from "../../services/authService";
-import { apiService } from "../../services/apiService";
 import styles from "./RoomList.module.css";
 import { messageService } from "../../services/messageService";
 
 const RoomList = ({ currentRoom, onSelectRoom }) => {
-  const [rooms, setRooms] = useState(["global"]);
+  const [localRooms, setLocalRooms] = useState(() => {
+    const user = authService.getCurrentUser();
+    return ["global", ...user?.chats || []];
+  });
+
   const [newRoomName, setNewRoomName] = useState("");
   const [isJoinRoom, setIsJoinRoom] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [error, setError] = useState("");
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+
   const roomsContainerRef = useRef(null);
   const roomsEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -22,14 +26,26 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
 
     try {
       setIsLoadingRooms(true);
+      setError("");
+
+      setLocalRooms((prev) => [...prev, roomName]);
+
+      const updatedUser = {
+        ...user,
+        chats: [...(user.chats || []), roomName],
+      };
+      authService.updateCurrentUser(updatedUser);
+
+      //нужно засунуть в бд
+
       await messageService.subscribeToRoom(roomName);
 
-      setRooms((prev) => [...new Set([...prev, roomName])]);
+      setLocalRooms((prev) => [...new Set([...prev, roomName])]);
       setNewRoomName("");
       setIsJoinRoom(false);
       onSelectRoom(roomName);
     } catch (error) {
-      setErrorMessage(
+      setError(
         error.message.includes("exists")
           ? "Room already exists"
           : "Failed to join room. Please try later."
@@ -37,7 +53,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
     } finally {
       setIsLoadingRooms(false);
     }
-  }, [newRoomName, user?.username, onSelectRoom]);
+  }, [newRoomName, user, onSelectRoom]);
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -57,43 +73,21 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
     }
   }, [isJoinRoom]);
 
-  useEffect(() => {
-    const loadRooms = async () => {
-      if (!user) return;
+  const handleRoomSelect = useCallback(
+    async (room) => {
+      if (room === currentRoom || isLoadingRooms) return;
 
       try {
-        const userData = await apiService.sendRequest(
-          `/user/${user.username}`,
-          {},
-          "GET",
-          "MONGO"
-        );
-
-        const userRooms = ["global", ...(userData.chats || [])];
-        setRooms(userRooms);
-      } catch (error) {
-        console.error("Failed to load rooms:", error);
+        if (!messageService.localRooms.has(room)) {
+          await messageService.subscribeToRoom(room);
+        }
+        onSelectRoom(room === "global" ? null : room);
+      } catch (err) {
+        setError(`Ошибка входа в ${room}`);
       }
-    };
-
-    loadRooms();
-  }, [user]);
-
-  const handleRoomSelect = async (room) => {
-    if (room === currentRoom) return;
-
-    try {
-      if (!messageService.currentRooms.has(room)) {
-        await messageService.subscribeToRoom(room);
-      }
-
-      onSelectRoom(room === "global" ? null : room);
-    } catch (error) {
-      setErrorMessage(`Failed to enter ${room}`);
-    } finally {
-      setIsLoadingRooms(false);
-    }
-  };
+    },
+    [currentRoom, isLoadingRooms, onSelectRoom]
+  );
 
   return (
     <div className={styles.container}>
@@ -121,7 +115,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
               Global Chat
             </div>
 
-            {rooms
+            {localRooms
               .filter((room) => room !== "global")
               .map((room) => (
                 <div
@@ -147,7 +141,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
               value={newRoomName}
               onChange={(e) => {
                 setNewRoomName(e.target.value);
-                setErrorMessage("");
+                setError("");
               }}
               onKeyDown={handleKeyDown}
               placeholder="Enter room name"
@@ -169,8 +163,8 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
                 Join
               </button>
             </div>
-            {errorMessage && (
-              <div className={styles.errorMessage}>{errorMessage}</div>
+            {error && (
+              <div className={styles.errorMessage}>{error}</div>
             )}
           </div>
         )}

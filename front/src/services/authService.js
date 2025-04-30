@@ -113,10 +113,10 @@ class AuthService {
     return !!this.getCurrentUser();
   }
 
-  // updateCurrentUser(updatedUser) {
-  //   this.currentUser = updatedUser;
-  //   localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedUser));
-  // }
+  updateCurrentUser(updatedUser) {
+    this.currentUser = updatedUser;
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedUser));
+  }
 }
 
 export const authService = new AuthService();
