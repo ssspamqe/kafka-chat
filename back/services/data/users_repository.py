@@ -8,7 +8,7 @@ class UsersRepository:
     def find_by_username(self, username: str):
         user = self.collection.find_one({"username": username})
         if user:
-            user["_id"] = str(user["_id"])  # Convert ObjectId to string
+            user["_id"] = str(user["_id"])
         return user if user else None
 
     def add_chat_subscription(self, username: str, chat: str):

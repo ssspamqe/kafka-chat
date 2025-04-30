@@ -12,25 +12,55 @@ class AuthService {
 
       console.log("Logging in with tag:", tag);
 
-      const response = await apiService.sendRequest(
+      const requestData = { username };
+      if (tag != null) {
+        requestData.tag = tag;
+      }
+
+      const existingUserResponse = await apiService.sendRequest(
         `/user/${encodeURIComponent(username)}`,
-        { username, tag },
+        null,
+        "GET",
+        "MONGO"
+      );
+
+      console.log("Existing user response:", existingUserResponse);
+
+      if (existingUserResponse) {
+        console.log("Existing user found:", existingUserResponse);
+        const user = {
+          username: existingUserResponse.username,
+          tag: existingUserResponse.tag || tag || null,
+          chats: existingUserResponse.chats || ["global"],
+        };
+
+        console.log("Existing user:", user);
+
+        this.currentUser = user;
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
+        return user;
+      }
+
+      console.log("Creating new user...");
+
+      const createResponse = await apiService.sendRequest(
+        `/user/${encodeURIComponent(username)}`,
+        requestData,
         "POST",
         "MONGO"
-      )
+      );
 
-      console.log("Login response:", response);
+      console.log("Create response:", createResponse);
 
-      const user = response.user || {
-        username: response.username,
-        tag: tag || null,
-        chats: ["global"],
+      const newUser = {
+        username: createResponse.user?.username || username,
+        tag: createResponse.user?.tag ?? tag ?? null,
+        chats: createResponse.user?.chats || ["global"],
       };
 
-      this.currentUser = user;
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-
-      return user;
+      this.currentUser = newUser;
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newUser));
+      return newUser;
     } catch (error) {
       console.error("Login failed:", error);
       throw new Error(error.message || "Login failed");

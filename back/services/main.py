@@ -18,6 +18,7 @@ db = None
 users_repository = None
 messages_repository = None
 
+
 class ChatMessage(BaseModel):
     chat: str
     text: str
@@ -25,9 +26,11 @@ class ChatMessage(BaseModel):
     sender: str
     timestamp: str
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global client, db, users_repository, messages_repository  # Ensure messages_repository is included
+    # Ensure messages_repository is included
+    global client, db, users_repository, messages_repository
 
     client = MongoClient(Variables.MONGO_CONNECTION_STRING)
     db = client[Variables.MONGO_DB]
@@ -67,15 +70,17 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["POST", "OPTIONS"],
+    allow_methods=["POST", "OPTIONS", "GET"],
     allow_headers=["*"],
     expose_headers=["*"]
 )
+
 
 @app.get("/user/{username}")
 async def get_user(username: str):
     user = users_repository.find_by_username(username)
     return user
+
 
 class CreateUserRequest(BaseModel):
     tag: Optional[str] = Field(None, description="Optional user tag")
@@ -102,8 +107,10 @@ async def create_user(username: str, request: CreateUserRequest):
         "user": user_data
     }
 
+
 class UpdateTagRequest(BaseModel):
     tag: Optional[str]
+
 
 @app.post("/tag/{username}")
 async def update_tag(username: str, request: UpdateTagRequest):
@@ -135,6 +142,7 @@ async def create_subscription(request: CreateSubscriptionRequest):
     requests.get(url, params=params)
     return {"status": "ok"}
 
+
 @app.get("/messages/{chat}/{tag}")
 async def get_messages(chat: str, tag: str):
     messages = messages_repository.get_messages(chat, tag)
@@ -143,6 +151,7 @@ async def get_messages(chat: str, tag: str):
     else:
         return {"status": "no messages found"}
 
+
 @app.get("/messages/{chat}")
 async def get_messages_without_tag(chat: str):
     messages = messages_repository.get_messages(chat, None)
@@ -150,6 +159,7 @@ async def get_messages_without_tag(chat: str):
         return {"messages": messages}
     else:
         return {"status": "no messages found"}
+
 
 @app.post("/message")
 async def create_message(message: ChatMessage):
@@ -162,6 +172,7 @@ async def create_message(message: ChatMessage):
     }
     messages_repository.save_message(message_data)
     return {"status": "ok"}
+
 
 @app.get("/openapi.json", include_in_schema=False)
 def get_open_api_schema():
