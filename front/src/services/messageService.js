@@ -86,14 +86,13 @@ class MessageService {
 
     try {
       await apiService.sendRequest(
-        "/subscription",
-        { chat: roomId, username: this.username },
+        `/subscribing/${this.username}/${roomId}`,
+        {},
         "POST",
-        "MONGO"
+        "CONSUMER"
       );
-      
+
       this.roomSubscriptions.add(roomId);
-      
       this._flushPendingMessages(roomId);
     } catch (error) {
       console.error("Failed to subscribe to room:", error);

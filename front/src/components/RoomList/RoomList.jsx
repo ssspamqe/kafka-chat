@@ -33,25 +33,33 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
   }, []);
 
   const handleJoinRoom = useCallback(async () => {
+    console.log("Attempting to join room:", newRoomName);
     const roomName = newRoomName.trim();
-    if (!roomName || !user?.username) return;
+    if (!roomName || !user?.username) {
+      console.error("Invalid room name or user not authenticated");
+      return;
+    }
 
     try {
       setIsLoadingRooms(true);
       setError("");
 
-      await messageService.subscribeToRoom(roomName);
+      setLocalRooms((prev) => [...prev, roomName]);
 
       const updatedUser = {
         ...user,
-        chats: [...new Set([...(user.chats || []), roomName])], // Удаляем дубликаты
+        chats: [...(user.chats || []), roomName],
       };
       authService.updateCurrentUser(updatedUser);
 
+      await messageService.subscribeToRoom(roomName);
+
+      setLocalRooms((prev) => [...new Set([...prev, roomName])]);
       setNewRoomName("");
       setIsJoinRoom(false);
       onSelectRoom(roomName);
     } catch (error) {
+      console.error("Failed to join room:", error);
       setError(
         error.message.includes("exists")
           ? "Room already exists"

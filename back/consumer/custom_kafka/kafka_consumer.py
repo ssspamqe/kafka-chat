@@ -82,3 +82,4 @@ async def consume_messages(consumer, websocket, username):
     finally:
         await consumer.stop()
         logger.info("Kafka consumer stopped.")
+
