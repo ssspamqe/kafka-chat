@@ -17,7 +17,7 @@ def initialize_state(app_state):
     global state
     state = app_state
 
-@router.post("/subscribing/{username}")
+@router.post("/subscribing/{username}/{chat}")
 async def subscribe_user(chat: str, username: str):
     logger.info(f"WebSocket connection request for user: {username}")
     logger.info(f"Subscribing user {username} to chat: {chat}")

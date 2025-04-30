@@ -9,7 +9,7 @@ import requests
 
 async def create_consumer(chats=None):
     if chats is None or chats == [] or chats == ["global"]:
-        chats = [config.KAFKA_GLOBAL_TOPIC]
+        chats = [config.KAFKA_GLOBAL_CHAT]
     logger.info("Creating Kafka consumer...")
     unique_group_id = str(uuid.uuid4())
     for index, chat in enumerate(chats):
@@ -82,3 +82,4 @@ async def consume_messages(consumer, websocket, username):
     finally:
         await consumer.stop()
         logger.info("Kafka consumer stopped.")
+

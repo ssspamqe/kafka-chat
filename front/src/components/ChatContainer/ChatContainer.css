@@ -1,0 +1,538 @@
+:root {
+  
+  --primary: #0088cc;
+  --primary-gradient: #00a8ff;
+  --border-light: rgba(0, 0, 0, 0.05);
+  --primary-dark: #0077b3;
+  --secondary: #00af9c;
+  --background: #e6ebee;
+  --surface: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --text-primary: #000000;
+  --text-secondary: #707579;
+  --online: #2ecc71;
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.05);
+  --scrollbar-track: #f0f0f0;
+--scrollbar-thumb: #ccc;
+--scrollbar-thumb-hover: #999;
+}
+
+.dark-theme {
+ 
+  --primary: #5694c3;
+  --primary-gradient: #6ab0e8;
+  --border-light: rgba(255, 255, 255, 0.05);
+  
+  --primary-dark: #4a7196;
+  --secondary: #4c9689;
+  --background: #17212b;
+  --surface: #232e3c;
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #e6eaed;
+  --text-secondary: #7d8b99;
+  --online: #00b341;
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.1);
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+}
+
+
+.chatHeader {
+  position: relative;
+}
+
+.theme-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+.chatApp {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: 100vh;
+  width: 100vw;
+  background: var(--background);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  z-index: 10;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; 
+}
+
+.username {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.userTag {
+  font-size: 0.75rem;
+  color: #6b7280;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface);
+  position: relative;
+  height: 100%;
+  min-height: 0; 
+}
+
+.chatHeader {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  z-index: 5;
+}
+
+.roomInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roomInfo h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roomStats {
+  display: flex;
+  gap: 1rem;
+  margin-top: 4px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.messageCount {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.headerButton {
+  background: none;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.headerButton:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.messageArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  padding: 0 1rem;
+
+  min-height: 0; 
+}
+
+.mobileMenuToggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 20;
+  background: var(--surface);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.menuLine {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text-primary);
+  transition: all 0.3s;
+}
+
+.closeIcon {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.new-message {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+@media (max-width: 1024px) {
+  .chatApp {
+    grid-template-columns: 260px 1fr;
+  }
+  
+  .userProfile {
+    padding: 1rem 1.25rem;
+  }
+  
+  .chatHeader {
+    padding: 0.75rem 1.25rem;
+  }
+  
+  .roomInfo h2 {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .chatApp {
+    grid-template-columns: 1fr;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    transform: translateX(-100%);
+    z-index: 15;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .mobileMenuToggle {
+    display: flex;
+    z-index: 20;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .userProfile {
+    padding: 1rem 1.25rem;
+    padding-left: 3.5rem;
+  }
+  
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  
+  .chatHeader {
+    padding: 0.75rem 1rem;
+  }
+  
+  .roomStats {
+    gap: 0.75rem;
+  }
+  
+  .headerButton {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .messageArea {
+    padding: 0 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .userProfile {
+    padding-left: 3rem;
+  }
+  
+  .mobileMenuToggle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .chatHeader {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .roomInfo h2 {
+    font-size: 1rem;
+  }
+  
+  .messageCount {
+    font-size: 0.7rem;
+  }
+  
+  .messageArea {
+    padding: 0 0.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .userProfile {
+    padding: 0.75rem 1rem;
+    padding-left: 2.75rem;
+  }
+  
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  margin-right: 8px;
+  }
+  
+  .username {
+    font-size: 0.85rem;
+  }
+  
+  .chatHeader {
+    padding: 0.5rem;
+  }
+}
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.userTag {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  margin-top: 2px;
+}
+/* Стили для редактирования тега */
+.tagContainer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.editTagButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 0.8rem;
+  padding: 2px;
+}
+
+.editTagButton:hover {
+  opacity: 1;
+}
+
+/* Модальное окно */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.tagEditModal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tagEditModal input {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modalButtons button {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+  gap: 8px;
+}
+
+.checkboxContainer input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.checkboxContainer label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+/* Стили для чекбокса */
+.tagCheckbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  margin-right: 5px;
+}
+
+.tagCheckbox:checked {
+  background-color: var(--primary);
+  border-color: var(--primary-dark);
+}
+
+.tagCheckbox:checked::after {
+  content: "✓";
+  position: absolute;
+  color: white;
+  font-size: 12px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tagCheckbox:hover {
+  border-color: var(--primary);
+}
+

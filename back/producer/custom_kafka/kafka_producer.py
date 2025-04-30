@@ -16,15 +16,15 @@ producer_config = {
 logger.info("Creating producer...")
 producer = Producer(producer_config)
 
-# Serialize the Message object to JSON before sending it to Kafka
-def send_message_to_global(message: Message):
-    topic_name = config.Variables.KAFKA_GLOBAL_TOPIC
-    serialized_message = json.dumps(message.__dict__).encode('utf-8')
+# # Serialize the Message object to JSON before sending it to Kafka
+# def send_message_to_global(message: Message):
+#     topic_name = config.Variables.KAFKA_GLOBAL_TOPIC
+#     serialized_message = json.dumps(message.__dict__).encode('utf-8')
 
-    logger.info(f"Sending global message to topic {topic_name}: {message.sender} - {message.text}, tag: {message.tag}")
-    producer.produce(topic_name, serialized_message)
+#     logger.info(f"Sending global message to topic {topic_name}: {message.sender} - {message.text}, tag: {message.tag}")
+#     producer.produce(topic_name, serialized_message)
 
-    producer.flush()
+#     producer.flush()
 
 def send_message_to_chat(chat, message: Message):
     topic_name = f'{config.Variables.KAFKA_CHAT_TOPIC_PREFIX}.{chat}'
