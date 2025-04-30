@@ -1,25 +1,33 @@
 from fastapi import FastAPI, HTTPException, Request, Response
 from pymongo import MongoClient
-from models.mongo_models import ChatMessage
 from data.mongo_migration import do_migrations
 from config.logger_config import logger
 import asyncio
 from contextlib import asynccontextmanager
 from data.users_repository import UsersRepository
+from data.messages_repository import MessagesRepository
 from pydantic import BaseModel
 from config.config import Variables
 import requests
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 
 client = None
 db = None
 users_repository = None
+messages_repository = None
 
+class ChatMessage(BaseModel):
+    chat: str
+    text: str
+    tag: Optional[str]
+    sender: str
+    timestamp: str
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global client, db, users_repository
+    global client, db, users_repository, messages_repository  # Ensure messages_repository is included
 
     client = MongoClient(Variables.MONGO_CONNECTION_STRING)
     db = client[Variables.MONGO_DB]
@@ -33,6 +41,7 @@ async def lifespan(app: FastAPI):
     logger.info("Migrations completed.")
 
     users_repository = UsersRepository(db)
+    messages_repository = MessagesRepository(db)  # Ensure this is initialized
 
     try:
         yield
@@ -63,7 +72,6 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-
 @app.api_route("/user/{username}", methods=["POST", "OPTIONS"])
 async def create_user(username: str, request: Request):
     if request.method == "OPTIONS":
@@ -77,33 +85,10 @@ async def create_user(username: str, request: Request):
         headers={"Access-Control-Allow-Origin": "*"}
     )
 
-
-@app.post("/messages")
-async def create_message(message: ChatMessage):
-    return {
-        "status": "not implemented"
-    }
-    # mongo_service.save_message
-    # db.messages.insert_one({
-    #     "chat": chat,
-    #     "sender": sender,
-    #     "text": text,
-    #     "tag": tag,
-    #     "timestamp": datetime.now()
-    # })
-    # return {"status": "ok"}
-
-
-@app.get("/messages/{chat}")
-async def get_messages(chat: str):
-    return {"status": "not implemented"}
-
-
 @app.get("/user/{username}")
 async def get_user(username: str):
     user = users_repository.find_by_username(username)
     return user
-
 
 @app.post("/user/{username}")
 async def create_user(username: str):
@@ -112,10 +97,8 @@ async def create_user(username: str):
     else:
         return {"status": "user already exists"}
 
-
 class UpdateTagRequest(BaseModel):
-    tag: str
-
+    tag: Optional[str]
 
 @app.post("/tag/{username}")
 async def create_tag(username: str, request: UpdateTagRequest):
@@ -144,9 +127,36 @@ async def create_subscription(request: CreateSubscriptionRequest):
     users_repository.add_chat_subscription(request.username, request.chat)
     url = f"http://{Variables.CONSUMER_HOST}/subscribing/{request.username}"
     params = {"chat": request.chat}
-    requests.post(url, params=params)
+    requests.get(url, params=params)
     return {"status": "ok"}
 
+@app.get("/messages/{chat}/{tag}")
+async def get_messages(chat: str, tag: str):
+    messages = messages_repository.get_messages(chat, tag)
+    if messages:
+        return {"messages": messages}
+    else:
+        return {"status": "no messages found"}
+
+@app.get("/messages/{chat}")
+async def get_messages_without_tag(chat: str):
+    messages = messages_repository.get_messages(chat, None)
+    if messages:
+        return {"messages": messages}
+    else:
+        return {"status": "no messages found"}
+
+@app.post("/message")
+async def create_message(message: ChatMessage):
+    message_data = {
+        "chat": message.chat,
+        "sender": message.sender,
+        "text": message.text,
+        "tag": message.tag,
+        "timestamp": message.timestamp
+    }
+    messages_repository.save_message(message_data)
+    return {"status": "ok"}
 
 @app.get("/openapi.json", include_in_schema=False)
 def get_open_api_schema():

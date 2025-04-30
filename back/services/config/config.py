@@ -6,3 +6,4 @@ class Variables:
     
     PRODUCER_HOST = "producer:8000"
     CONSUMER_HOST = "consumer:8001"
+    MONGO_MESSAGES_COLLECTION = "messages"

@@ -78,6 +78,17 @@ services:
     depends_on:
       - mongodb
 
+  front:
+    build: ./front
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+    volumes:
+      - ./front:/app
+    depends_on:
+      - kafka
+
 networks:
   backend:
     driver: bridge

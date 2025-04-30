@@ -1,4 +1,3 @@
-
 import { apiService } from "./apiService";
 
 class AuthService {
@@ -42,15 +41,12 @@ async updateUserTag(tag) {
     if (!user) throw new Error("User not authenticated");
     
     const response = await apiService.sendRequest(
-      "/users/update-tag", 
-      { 
-        username: user.username,
-        tag: tag || null // Разрешаем null значение
-      },
-      "PATCH"
+      `/tag/${user.username}`,
+      { tag: tag || null },
+      "POST",
+      "MONGO"
     );
     
-    // Обновляем локальные данные
     this.currentUser = { ...user, tag };
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.currentUser));
     
@@ -91,9 +87,10 @@ async updateUserTag(tag) {
       if (!user) throw new Error("User not authenticated");
       
       const response = await apiService.sendRequest(
-        "/users/update-tag",
-        { username: user.username, tag },
-        "PATCH"
+        `/tag/${user.username}`,
+        { tag },
+        "POST",
+        "MONGO"
       );
       
       this.currentUser = { ...user, tag };
