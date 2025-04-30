@@ -44,6 +44,7 @@ class MessageService {
       this.consumerSocket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          if (message.sender === this.username) return;
           console.log("Received message:", message);
           
           if (!this.roomSubscriptions.has(message.chat)) {
