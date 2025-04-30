@@ -4,11 +4,7 @@ import styles from "./RoomList.module.css";
 import { messageService } from "../../services/messageService";
 
 const RoomList = ({ currentRoom, onSelectRoom }) => {
-  const [localRooms, setLocalRooms] = useState(() => {
-    const user = authService.getCurrentUser();
-    return ["global", ...user?.chats || []];
-  });
-
+  const [localRooms, setLocalRooms] = useState(["global"]);
   const [newRoomName, setNewRoomName] = useState("");
   const [isJoinRoom, setIsJoinRoom] = useState(false);
   const [error, setError] = useState("");
@@ -20,6 +16,22 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
 
   const user = authService.getCurrentUser();
 
+  useEffect(() => {
+    const loadRooms = () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser?.chats) {
+        setLocalRooms(["global", ...currentUser.chats]);
+      }
+    };
+
+    loadRooms();
+
+    const handleUserUpdate = () => loadRooms();
+    window.addEventListener("userUpdated", handleUserUpdate);
+
+    return () => window.removeEventListener("userUpdated", handleUserUpdate);
+  }, []);
+
   const handleJoinRoom = useCallback(async () => {
     const roomName = newRoomName.trim();
     if (!roomName || !user?.username) return;
@@ -28,19 +40,14 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
       setIsLoadingRooms(true);
       setError("");
 
-      setLocalRooms((prev) => [...prev, roomName]);
+      await messageService.subscribeToRoom(roomName);
 
       const updatedUser = {
         ...user,
-        chats: [...(user.chats || []), roomName],
+        chats: [...new Set([...(user.chats || []), roomName])], // Удаляем дубликаты
       };
       authService.updateCurrentUser(updatedUser);
 
-      //нужно засунуть в бд
-
-      await messageService.subscribeToRoom(roomName);
-
-      setLocalRooms((prev) => [...new Set([...prev, roomName])]);
       setNewRoomName("");
       setIsJoinRoom(false);
       onSelectRoom(roomName);
@@ -78,12 +85,11 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
       if (room === currentRoom || isLoadingRooms) return;
 
       try {
-        if (!messageService.localRooms.has(room)) {
-          await messageService.subscribeToRoom(room);
-        }
+        await messageService.subscribeToRoom(room);
         onSelectRoom(room === "global" ? null : room);
       } catch (err) {
-        setError(`Ошибка входа в ${room}`);
+        setError(`Failed to join room ${room}`);
+        console.error("Room select error:", err);
       }
     },
     [currentRoom, isLoadingRooms, onSelectRoom]
@@ -163,9 +169,7 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
                 Join
               </button>
             </div>
-            {error && (
-              <div className={styles.errorMessage}>{error}</div>
-            )}
+            {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
         )}
       </div>

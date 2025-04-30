@@ -116,6 +116,7 @@ class AuthService {
   updateCurrentUser(updatedUser) {
     this.currentUser = updatedUser;
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedUser));
+    window.dispatchEvent(new Event("userUpdated"));
   }
 }
 
