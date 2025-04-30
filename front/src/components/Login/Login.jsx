@@ -26,7 +26,7 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      await login(username, tag); 
+      await login(username, tag.trim() ? tag : null);
       onLogin();
     } catch (error) {
       setError(error.message.includes('already exists') 
@@ -106,9 +106,6 @@ const Login = ({ onLogin }) => {
           </div>
           <div className="featureItem">
             <span className="featureIcon">🔒</span> Private messaging
-          </div>
-          <div className="featureItem">
-            <span className="featureIcon">🎨</span> Customize your profile
           </div>
         </div>
       </form>

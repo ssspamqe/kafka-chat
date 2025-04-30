@@ -30,8 +30,8 @@ const ChatContainer = () => {
       console.log("Update response:", response); 
       
       setIsEditingTag(false);
-      const updatedUser = authService.getCurrentUser();
-      console.log("Updated user:", updatedUser); 
+      // const updatedUser = authService.getCurrentUser();
+      // console.log("Updated user:", updatedUser); 
       
       forceUpdate();
     } catch (error) {
@@ -101,7 +101,7 @@ const ChatContainer = () => {
     const message = {
       text: typeof content === "string" ? content : content.text,
       sender: user.username,
-      tag: user.tag || null,
+      tag: showTag ? (user.tag || null) : null,
       timestamp: new Date().toISOString(),
       chat: currentRoom || "global"
     };
@@ -157,7 +157,7 @@ const ChatContainer = () => {
     className="tagCheckbox"
     title={showTag ? "Hide tag" : "Show tag"}
   />
-              <span className="userTag">{user?.tag || '#'}</span>
+              <span className="userTag">{user?.tag || 'No tag'}</span>
               <button 
                 className="editTagButton"
                 onClick={() => setIsEditingTag(true)}

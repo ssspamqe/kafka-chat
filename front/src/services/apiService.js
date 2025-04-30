@@ -1,6 +1,5 @@
 import { config } from "../config";
 
-
 class ApiService {
   constructor() {
     this.producerSocket = null;
@@ -8,7 +7,7 @@ class ApiService {
     this.messageCallbacks = [];
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.availableTags = []; 
+    this.availableTags = [];
   }
 
   async connectToConsumer(endpoint) {
@@ -55,12 +54,7 @@ class ApiService {
   }
   async fetchTags() {
     try {
-      const response = await this.sendRequest(
-        "/tags", 
-        {}, 
-        "GET", 
-        "MONGO"
-      );
+      const response = await this.sendRequest("/tags", {}, "GET", "MONGO");
       this.availableTags = response.tags || [];
       return this.availableTags;
     } catch (error) {
@@ -76,7 +70,7 @@ class ApiService {
         "POST",
         "MONGO"
       );
-     
+
       this.availableTags = [...this.availableTags, response];
       return response;
     } catch (error) {
@@ -112,10 +106,6 @@ class ApiService {
     }
   }
 
-
-
-
-
   async sendRequest(
     endpoint,
     data = {},
@@ -133,6 +123,7 @@ class ApiService {
     const baseUrl = `http://${config.SERVICE_HOST}:${ports[serviceType]}`;
     const url = `${baseUrl}${endpoint}`;
 
+    console.log("Making request to:", url);
     try {
       const response = await fetch(url, {
         method,
@@ -153,7 +144,6 @@ class ApiService {
       throw error;
     }
   }
-  
 
   onMessage(callback) {
     this.messageCallbacks.push(callback);

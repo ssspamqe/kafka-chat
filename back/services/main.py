@@ -91,17 +91,31 @@ async def get_user(username: str):
     return user
 
 @app.post("/user/{username}")
-async def create_user(username: str):
-    if users_repository.save_user_with_username(username):
-        return {"status": "ok"}
+async def create_user(username: str, tag: Optional[str] = None):
+    if users_repository.save_user_with_username(username, tag):
+        user_data = {
+            "username": username,
+            "tag": tag,
+            "chats": ["global"]
+        }
     else:
-        return {"status": "user already exists"}
+        users_repository.save_tag(username, tag)
+        user_data = {
+            "username": username,
+            "tag": tag,
+            "chats": users_repository.get_user_chats(username) or ["global"]
+        }
+
+    return {
+        "status": "ok",
+        "user": user_data
+    }
 
 class UpdateTagRequest(BaseModel):
     tag: Optional[str]
 
 @app.post("/tag/{username}")
-async def create_tag(username: str, request: UpdateTagRequest):
+async def update_tag(username: str, request: UpdateTagRequest):
     if users_repository.save_tag(username, request.tag):
         return {"status": "ok"}
     else:

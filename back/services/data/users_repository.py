@@ -22,10 +22,10 @@ class UsersRepository:
                 return True
         return False
 
-    def save_user_with_username(self, username: str):
+    def save_user_with_username(self, username: str, tag: str = None):
         user = self.collection.find_one({"username": username})
         if not user:
-            self.collection.insert_one({"username": username, "chats": ['global'], "tag": None})
+            self.collection.insert_one({"username": username, "chats": ['global'], "tag": tag})
             return True
         return False
     
@@ -43,6 +43,12 @@ class UsersRepository:
         user = self.collection.find_one({"username": username})
         if user:
             return user.get("tag")
+        return None
+    
+    def get_user_chats(self, username: str):
+        user = self.collection.find_one({"username": username})
+        if user:
+            return user.get("chats")
         return None
 
 class User(BaseModel):
