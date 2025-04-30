@@ -41,10 +41,19 @@ async updateUserTag(tag) {
     if (!user) throw new Error("User not authenticated");
     
     const response = await apiService.sendRequest(
+<<<<<<< HEAD
       `/tag/${user.username}`,
       { tag: tag || null },
       "POST",
       "MONGO"
+=======
+      "/users/update-tag", 
+      { 
+        username: user.username,
+        tag: tag || null
+      },
+      "PATCH"
+>>>>>>> 921728858273ec08b6588246f3a4c4cc65fe5ead
     );
     
     this.currentUser = { ...user, tag };
@@ -81,6 +90,7 @@ async updateUserTag(tag) {
     return !!this.getCurrentUser();
   }
 
+<<<<<<< HEAD
   async updateUserTag(tag) {
     try {
       const user = this.getCurrentUser();
@@ -102,6 +112,8 @@ async updateUserTag(tag) {
       throw error;
     }
   }
+=======
+>>>>>>> 921728858273ec08b6588246f3a4c4cc65fe5ead
   updateCurrentUser(updatedUser) {
     this.currentUser = updatedUser;
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedUser));

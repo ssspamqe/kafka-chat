@@ -1,5 +1,5 @@
 import EmojiPicker from 'emoji-picker-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { authService } from '../../services/authService';
 import './MessageInput.css';
 
