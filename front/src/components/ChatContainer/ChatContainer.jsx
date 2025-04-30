@@ -30,8 +30,6 @@ const ChatContainer = () => {
       console.log("Update response:", response); 
       
       setIsEditingTag(false);
-      // const updatedUser = authService.getCurrentUser();
-      // console.log("Updated user:", updatedUser); 
       
       forceUpdate();
     } catch (error) {
@@ -111,11 +109,12 @@ const ChatContainer = () => {
   };
 
   const handleRoomChange = async (room) => {
+    setMessages([]);
     setCurrentRoom(room);
   
     try {
-      const history = await messageService.loadHistory(room || 'global');
-      setMessages(history);
+      // const history = await messageService.loadHistory(room || 'global');
+      // setMessages(history);
       
       if (room && room !== 'global') {
         await messageService.subscribeToRoom(room);

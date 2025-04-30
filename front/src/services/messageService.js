@@ -87,7 +87,8 @@ class MessageService {
       await apiService.sendRequest(
         "/subscription",
         { chat: roomId, username: this.username },
-        "POST"
+        "POST",
+        "MONGO"
       );
       
       this.roomSubscriptions.add(roomId);

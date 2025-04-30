@@ -6,35 +6,33 @@ class AuthService {
     this.STORAGE_KEY = "chatCurrentUser";
   }
 
-  async login(username, tag = null) {
+  async login(username, tag) {
     try {
       if (!username) throw new Error("Username is required");
-  
+
+      console.log("Logging in with tag:", tag);
+
       const response = await apiService.sendRequest(
         `/user/${encodeURIComponent(username)}`,
         { username, tag },
-        'POST',
-        'MONGO'
-      );
-  
-      if (!response || response.status !== "ok") {
-        throw new Error(response?.message || "Invalid server response");
-      }
-  
+        "POST",
+        "MONGO"
+      )
+
+      console.log("Login response:", response);
+
       const user = response.user || {
         username: response.username,
         tag: tag || null,
-        chats: ["global"]
+        chats: ["global"],
       };
-  
-      if (!user.username) throw new Error("Missing username in response");
-  
+
       this.currentUser = user;
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-      
+
       return user;
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       throw new Error(error.message || "Login failed");
     }
   }

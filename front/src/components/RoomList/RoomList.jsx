@@ -65,7 +65,8 @@ const RoomList = ({ currentRoom, onSelectRoom }) => {
         const userData = await apiService.sendRequest(
           `/user/${user.username}`,
           {},
-          "GET"
+          "GET",
+          "MONGO"
         );
 
         const userRooms = ["global", ...(userData.chats || [])];

@@ -106,12 +106,7 @@ class ApiService {
     }
   }
 
-  async sendRequest(
-    endpoint,
-    data = {},
-    method = "POST",
-    serviceType = "MONGO"
-  ) {
+  async sendRequest(endpoint, data, method, serviceType) {
     endpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 
     const ports = {
@@ -124,6 +119,8 @@ class ApiService {
     const url = `${baseUrl}${endpoint}`;
 
     console.log("Making request to:", url);
+    console.log("Request body:", data, method, serviceType);
+
     try {
       const response = await fetch(url, {
         method,
@@ -134,8 +131,10 @@ class ApiService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(
+          `HTTP error! Status: ${response.status}, Message: ${errorText}`
+        );
       }
 
       return await response.json();

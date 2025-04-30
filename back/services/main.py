@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI
 from pymongo import MongoClient
 from data.mongo_migration import do_migrations
 from config.logger_config import logger
@@ -6,7 +6,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from data.users_repository import UsersRepository
 from data.messages_repository import MessagesRepository
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from config.config import Variables
 import requests
 from fastapi.openapi.utils import get_openapi
@@ -72,37 +72,28 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-@app.api_route("/user/{username}", methods=["POST", "OPTIONS"])
-async def create_user(username: str, request: Request):
-    if request.method == "OPTIONS":
-        return Response(status_code=204)
-
-    if users_repository.save_user_with_username(username):
-        return {"status": "ok", "username": username}
-    raise HTTPException(
-        status_code=400,
-        detail="User already exists",
-        headers={"Access-Control-Allow-Origin": "*"}
-    )
-
 @app.get("/user/{username}")
 async def get_user(username: str):
     user = users_repository.find_by_username(username)
     return user
 
+class CreateUserRequest(BaseModel):
+    tag: Optional[str] = Field(None, description="Optional user tag")
+
+
 @app.post("/user/{username}")
-async def create_user(username: str, tag: Optional[str] = None):
-    if users_repository.save_user_with_username(username, tag):
+async def create_user(username: str, request: CreateUserRequest):
+    if users_repository.save_user_with_username(username, request.tag):
         user_data = {
             "username": username,
-            "tag": tag,
+            "tag": request.tag,
             "chats": ["global"]
         }
     else:
-        users_repository.save_tag(username, tag)
+        users_repository.save_tag(username, request.tag)
         user_data = {
             "username": username,
-            "tag": tag,
+            "tag": request.tag,
             "chats": users_repository.get_user_chats(username) or ["global"]
         }
 
