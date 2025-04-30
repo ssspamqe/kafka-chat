@@ -1,24 +1,52 @@
 # Kafka Chat Producer
 
-## How to Start the Server
+## Overview
+The Kafka Chat Producer is a FastAPI-based microservice responsible for sending messages to Kafka topics. It enables real-time communication by publishing messages to specific chat rooms or globally.
 
-1. **Install Dependencies**:
+---
+
+## Features
+- **WebSocket Endpoints**: Send messages to chat rooms or globally.
+- **Kafka Integration**: Publishes messages to Kafka topics.
+- **Health Check**: Ensures the service is running and operational.
+
+---
+
+## Prerequisites
+- Python 3.9 or higher
+- Kafka server running and accessible
+
+---
+
+## Installation
+
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd kafka-chat/back/producer
+   ```
+
+2. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Run the Server**:
+---
+
+## How to Start the Server
+
+1. **Run the Server**:
    ```bash
    uvicorn main:app --host 0.0.0.0 --port 8000
    ```
 
-3. **Access the API Documentation**:
+2. **Access the API Documentation**:
    - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
    - ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ---
 
-## API Contract
+## API Endpoints
 
 ### WebSocket Endpoints
 
@@ -29,7 +57,7 @@
      {
        "sender": "string",
        "text": "string",
-        "tag": "tag"
+       "tag": "tag"
      }
      ```
 
@@ -40,17 +68,13 @@
      {
        "sender": "string",
        "text": "string",
-        "tag": "tag"
+       "tag": "tag"
      }
      ```
 
 ---
 
-## Kafka Contract
-
-### Topics
-
-(if the required topic does not exist, it will be created automatically )
+## Kafka Topics
 
 1. **`kafka.chat.global`**
    - **Description**: Topic for global messages.
@@ -63,7 +87,7 @@
      }
      ```
 
-2. **`kafka.chat.room.{chat}`**
+2. **`kafka.chat.{chat}`**
    - **Description**: Topic for messages in specific chat rooms.
    - **Message Format**:
      ```json
@@ -73,3 +97,21 @@
        "tag": "tag"
      }
      ```
+
+---
+
+## Project Structure
+- **`main.py`**: Entry point of the application.
+- **`custom_websockets/`**: Contains WebSocket endpoint implementations.
+- **`custom_kafka/`**: Kafka producer logic.
+- **`config/`**: Configuration files for logging and application settings.
+
+---
+
+## Contributing
+Contributions are welcome! Please fork the repository and submit a pull request.
+
+---
+
+## License
+This project is licensed under the MIT License.
