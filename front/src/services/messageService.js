@@ -23,7 +23,7 @@ class MessageService {
 
     try {
       await this._setupConsumerSocket();
-      await this._ensureRoomSubscription('global');
+      await this.subscribeToRoom('global');
     } catch (error) {
       console.error("Connection error:", error);
       throw error;
