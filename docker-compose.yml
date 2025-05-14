@@ -89,6 +89,18 @@ services:
     depends_on:
       - kafka
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro 
+    depends_on:
+      - front
+      - mongo-service
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge
