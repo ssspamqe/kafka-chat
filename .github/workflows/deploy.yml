@@ -1,0 +1,32 @@
+name: Deploy Docker Compose app
+
+on:
+  workflow_dispatch:  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to remote server
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          set -e
+          cd ${{ secrets.APP_DIRECTORY }}
+          git pull origin $(git symbolic-ref --short HEAD)
+          git status
+          docker compose down
+          docker compose pull || true
+          docker compose build
+          docker compose up -d
+        EOF
