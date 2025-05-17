@@ -41,8 +41,8 @@ jobs:
             set -e
             cd ${{ secrets.APP_DIRECTORY }}
             git pull origin $(git symbolic-ref --short HEAD)
-            docker compose down
-            docker compose pull || true
-            docker compose build
-            docker compose up -d
+            git status
+            docker-compose down
+            docker-compose build
+            docker-compose up -d
           EOF
