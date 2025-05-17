@@ -79,9 +79,9 @@ services:
       - mongodb
 
   front:
-    build: ./front
-    ports:
-      - "3000:3000"
+    build:
+      context: ./front
+      target: builder
     networks:
       - backend
     volumes:
@@ -96,6 +96,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro 
+      - ./front/build:/usr/share/nginx/html:ro
     depends_on:
       - front
       - mongo-service
