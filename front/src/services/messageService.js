@@ -31,7 +31,8 @@ class MessageService {
   }
 
   async _setupConsumerSocket() {
-    return new Promise((resolve, reject) => {      const wsUrl = `${config.WS_PROTOCOL}${config.SERVICE_HOST}/ws/consumer/receive-messages/user/${this.username}`;
+    return new Promise((resolve, reject) => {      
+      const wsUrl = `${config.CONSUMER_SERVICE_HOST}/receive-messages/user/${this.username}`;
       console.log('Connecting to WebSocket:', wsUrl);
       this.consumerSocket = new WebSocket(wsUrl);
 
@@ -114,8 +115,11 @@ class MessageService {
   async sendMessage(roomId, message) {
     if (!this.username) throw new Error("Not authenticated");
 
-    try {      if (!this.producerSockets.has(roomId)) {
-        const wsUrl = `${config.WS_PROTOCOL}${config.SERVICE_HOST}/ws/producer/send-message/chat/${roomId}`;
+    try {      
+      if (!this.producerSockets.has(roomId)) {
+        
+        const wsUrl = `ws://${config.PRODUCER_SERVICE_HOST}/send-message/chat/${roomId}`;
+        //const wsUrl = `${config.WS_PROTOCOL}${config.SERVICE_HOST}/ws/producer/send-message/chat/${roomId}`;
         console.log('Connecting to producer WebSocket:', wsUrl);
         const socket = new WebSocket(wsUrl);
 
