@@ -1,11 +1,12 @@
 name: Docker Compose CI/CD
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - '*'
+  push:
+    branches:
+      - 'master'
 
 jobs:
   build:
