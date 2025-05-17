@@ -1,3 +1,5 @@
+import time
+from prometheus_client import Counter, Histogram, Gauge
 from aiokafka import AIOKafkaConsumer
 import config.config as config
 import asyncio
@@ -6,6 +8,19 @@ import json
 from fastapi import WebSocket, WebSocketDisconnect
 import uuid
 import requests
+
+MESSAGES_CONSUMED = Counter(
+    'kafka_messages_consumed_total',
+    'Total messages consumed from Kafka',
+    ['topic']
+)
+
+CONSUME_LATENCY = Histogram(
+    'kafka_consume_latency_seconds',
+    'Latency of Kafka consume operations',
+    ['topic'],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
 
 async def create_consumer(chats=None):
     if chats is None or chats == [] or chats == ["global"]:
@@ -54,6 +69,7 @@ async def consume_messages(consumer, websocket, username):
     try:
         await consumer.start()
         async for message in consumer:
+            start_time = time.time()
             tag = None
             response = requests.get(f'http://{config.MONGODB_SERVICE_HOST}:{config.MONGODB_PORT}/tag/{username}')
             if response.status_code == 200:
@@ -70,11 +86,15 @@ async def consume_messages(consumer, websocket, username):
                 logger.info(f"Message tag {msg_tag} does not match user tag {tag}. Skipping message.")
                 continue
             logger.info(f"Received message: {structured_message}")
+
             try:
                 await websocket.send_json(structured_message)
                 logger.info(f"Sent structured message to WebSocket: {structured_message}")
+                MESSAGES_CONSUMED.labels(topic=topic).inc()
+                CONSUME_LATENCY.labels(topic=topic).observe(time.time() - start_time)
             except WebSocketDisconnect:
                 logger.info(f"WebSocket disconnected for topic: {topic}")
+
     except asyncio.CancelledError:
         logger.warning("Message consumption cancelled.")
     except Exception as e:
