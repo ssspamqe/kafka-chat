@@ -1,6 +1,6 @@
 const isLocal = window.location.hostname === 'localhost';
 const serviceHost = isLocal ? 'localhost' : window.location.hostname;
-const wsProtocol = isLocal ? 'ws://' : 'wss://';
+const wsProtocol = isLocal ? 'ws://' : 'ws://';
 
 export const config = {
     SERVICE_HOST: isLocal ? `${serviceHost}` : `${serviceHost}`,
