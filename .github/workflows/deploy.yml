@@ -1,32 +1,48 @@
-name: Deploy Docker Compose app
+name: Docker Compose CI/CD
 
 on:
-  workflow_dispatch:  
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
+    name: Build and Verify
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Verify Docker Compose
+        run: docker compose config
+
+  deploy:
+    name: Manual Deployment
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Deploy to remote server
-      run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          set -e
-          cd ${{ secrets.APP_DIRECTORY }}
-          git pull origin $(git symbolic-ref --short HEAD)
-          git status
-          docker compose down
-          docker compose pull || true
-          docker compose build
-          docker compose up -d
-        EOF
+      - name: Deploy to remote server
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            set -e
+            cd ${{ secrets.APP_DIRECTORY }}
+            git pull origin $(git symbolic-ref --short HEAD)
+            docker compose down
+            docker compose pull || true
+            docker compose build
+            docker compose up -d
+          EOF
