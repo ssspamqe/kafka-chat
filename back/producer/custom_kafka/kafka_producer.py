@@ -32,7 +32,8 @@ class Message:
         self.tag = tag
 
 producer_config = {
-    'bootstrap.servers': config.Variables.KAFKA_BOOTSTRAP_SERVERS
+    'bootstrap.servers': config.Variables.KAFKA_BOOTSTRAP_SERVERS,
+    'linger.ms': 1
 }
 logger.info("Creating producer...")
 producer = Producer(producer_config)
@@ -68,7 +69,7 @@ def create_kafka_topic_if_not_exists(topic_name: str):
 
     if topic_name not in existing_topics:
         logger.info(f"Topic '{topic_name}' does not exist. Creating it...")
-        new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1)
+        new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1, )
         admin_client.create_topics([new_topic])
         logger.info(f"Topic '{topic_name}' created successfully.")
     else:
