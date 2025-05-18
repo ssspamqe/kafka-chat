@@ -94,10 +94,12 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    env_file:
+      - .env
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--web.route-prefix=/prometheus'
-      - '--web.external-url=http://103.137.251.62/prometheus/'
+      - '--web.external-url=http://${HOST_URL}/prometheus/'
     networks:
       - backend
     depends_on:
