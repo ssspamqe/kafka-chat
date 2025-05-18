@@ -17,7 +17,7 @@ class ApiService {
       }
 
       const socket = new WebSocket(
-        `ws://${config.SERVICE_HOST}:${config.CONSUMER_HOST}${endpoint}`
+        `ws://${config.CONSUMER_SERVICE_HOST}${endpoint}`
       );
 
       socket.onopen = () => {
@@ -109,13 +109,20 @@ class ApiService {
   async sendRequest(endpoint, data, method, serviceType) {
     endpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 
-    const ports = {
-      MONGO: config.MONGODB_PORT,
-      PRODUCER: config.PRODUCER_HOST,
-      CONSUMER: config.CONSUMER_HOST,
-    };
+    // const ports = {
+    //   MONGO: config.MONGODB_PORT,
+    //   PRODUCER: config.PRODUCER_HOST,
+    //   CONSUMER: config.CONSUMER_HOST,
+    // };
 
-    const baseUrl = `http://${config.SERVICE_HOST}:${ports[serviceType]}`;
+    const hostsMap = {
+      MONGO: config.MONGO_SERVICE_HOST,
+      PRODUCER: config.PRODUCER_SERVICE_HOST,
+      CONSUMER: config.CONSUMER_SERVICE_HOST
+    }
+
+    const baseUrl = `http://${hostsMap[serviceType]}`;
+    //const baseUrl = `http://${config.SERVICE_HOST}:${ports[serviceType]}`;
     const url = `${baseUrl}${endpoint}`;
 
     console.log("Making request to:", url);
