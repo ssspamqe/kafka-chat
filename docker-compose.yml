@@ -99,7 +99,6 @@ services:
       - mongo-service
     networks:
       - backend
-      - kafka
   
   prometheus:
     image: prom/prometheus
