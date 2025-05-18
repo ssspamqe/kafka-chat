@@ -34,7 +34,7 @@ class MessageService {
     return new Promise((resolve, reject) => {      
 
       console.log(`consumer host in configs: ${config.CONSUMER_SERVICE_HOST}`)
-      const wsUrl = `${config.CONSUMER_SERVICE_HOST}/receive-messages/user/${this.username}`;
+      const wsUrl = `ws://${config.CONSUMER_SERVICE_HOST}/receive-messages/user/${this.username}`;
       console.log('Connecting to WebSocket:', wsUrl);
       this.consumerSocket = new WebSocket(wsUrl);
 
