@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     environment:
@@ -128,6 +127,8 @@ services:
       - backend
     depends_on:
       - prometheus
+    environment:
+      - GF_SERVER_ROOT_URL=/grafana/
 
 networks:
   backend:
