@@ -1,5 +1,6 @@
 name: Docker Compose CI/CD
-
+env:
+  HOST_URL: ${{ secrets.HOST_URL }}
 on:
   pull_request:
     branches:

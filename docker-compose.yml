@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     environment:
@@ -42,6 +41,7 @@ services:
       - ./back/producer:/app
     ports:
       - "8000:8000"
+      - "8003:8003"  # Prometheus metrics port
     networks:
       - backend
 
@@ -56,6 +56,7 @@ services:
       - ./back/consumer:/app
     ports:
       - "8001:8001"
+      - "8004:8004"  # Prometheus metrics port 
     networks:
       - backend
 
@@ -73,6 +74,7 @@ services:
     build: ./back/services
     ports:
       - "8002:8002"
+      - "8005:8005"  # Prometheus metrics port
     networks:
       - backend
     depends_on:
@@ -85,6 +87,37 @@ services:
       - kafka
     networks:
       - backend
+  
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.route-prefix=/prometheus'
+      - '--web.external-url=http://${HOST_URL}/prometheus/'
+    networks:
+      - backend
+    depends_on:
+      - producer
+      - consumer
+      - mongo-service
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana_data:/var/lib/grafana
+    networks:
+      - backend
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SERVER_ROOT_URL=/grafana/
 
   nginx:
     image: nginx:latest
@@ -95,6 +128,8 @@ services:
     depends_on:
       - front
       - mongo-service
+      - prometheus
+      - grafana
     networks:
       - backend
 
@@ -104,3 +139,4 @@ networks:
 
 volumes:
   mongodb_data:
+  grafana_data:

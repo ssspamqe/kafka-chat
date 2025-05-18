@@ -1,3 +1,5 @@
+from prometheus_client import Counter, Histogram
+import time
 from fastapi import APIRouter, WebSocket
 from pydantic import BaseModel
 from config.logger_config import logger
@@ -8,6 +10,19 @@ import requests
 router = APIRouter()
 state = None
 
+WS_CONNECTIONS = Counter(
+    'websocket_connections_total',
+    'Total number of WebSocket connection attempts',
+    ['username']
+)
+
+WS_LATENCY = Histogram(
+    'websocket_connection_duration_seconds',
+    'Duration of WebSocket connections',
+    ['username'],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
+
 def initialize_state(app_state):
     global state
     state = app_state
@@ -15,6 +30,9 @@ def initialize_state(app_state):
 @router.websocket("/receive-messages/user/{username}")
 async def send_person_message(websocket: WebSocket, username: str):
     logger.info(f"WebSocket connection request for user: {username}")
+    WS_CONNECTIONS.labels(username=username).inc()
+    start_time = time.time()
+
     await websocket.accept()
     if username in state.consumers:
         logger.warning(f"The user {username} already has a connection")
@@ -45,5 +63,8 @@ async def send_person_message(websocket: WebSocket, username: str):
 
     logger.info(f"WebSocket connection closed for user: {username}")
     await websocket.close()
+
+    duration = time.time() - start_time
+    WS_LATENCY.labels(username=username).observe(duration)
 
 

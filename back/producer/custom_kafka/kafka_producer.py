@@ -1,8 +1,29 @@
+from prometheus_client import Counter, Histogram
+import time
 import json
 from confluent_kafka import Producer
 from config import config
 from config.logger_config import logger
 from confluent_kafka.admin import AdminClient, NewTopic
+
+MESSAGES_SENT = Counter(
+    'kafka_messages_produced_total',
+    'Total messages sent to Kafka',
+    ['topic']
+)
+
+PRODUCE_LATENCY = Histogram(
+    'kafka_produce_latency_seconds',
+    'Latency of Kafka produce operations',
+    ['topic'],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
+
+PRODUCE_ERRORS = Counter(
+    'kafka_produce_errors_total',
+    'Total Kafka produce errors',
+    ['error_type']
+)
 
 class Message:
     def __init__(self, sender: str, text: str, tag:str):
@@ -17,25 +38,29 @@ producer_config = {
 logger.info("Creating producer...")
 producer = Producer(producer_config)
 
-# # Serialize the Message object to JSON before sending it to Kafka
-# def send_message_to_global(message: Message):
-#     topic_name = config.Variables.KAFKA_GLOBAL_TOPIC
-#     serialized_message = json.dumps(message.__dict__).encode('utf-8')
-
-#     logger.info(f"Sending global message to topic {topic_name}: {message.sender} - {message.text}, tag: {message.tag}")
-#     producer.produce(topic_name, serialized_message)
-
-#     producer.flush()
-
 def send_message_to_chat(chat, message: Message):
     topic_name = f'{config.Variables.KAFKA_CHAT_TOPIC_PREFIX}.{chat}'
     create_kafka_topic_if_not_exists(f"kafka.chat.{chat}")
     serialized_message = json.dumps(message.__dict__).encode('utf-8')
 
-    logger.info(f"Sending message to chat {chat} in topic {topic_name}: {message.sender} - {message.text}, tag: {message.tag}")
-    producer.produce(topic_name, serialized_message)
+    try:
+        start_time = time.time()
+        logger.info(f"Sending message to chat {chat} in topic {topic_name}: {message.sender} - {message.text}, tag: {message.tag}")
+        producer.produce(topic_name, serialized_message)
 
-    producer.flush()
+        producer.flush()
+
+        MESSAGES_SENT.labels(topic=topic_name).inc()
+        PRODUCE_LATENCY.labels(topic=topic_name).observe(time.time() - start_time)
+        
+    except KafkaException as e:
+        PRODUCE_ERRORS.labels(error_type=str(e.code())).inc()
+        logger.error(f"Failed to send message: {str(e)}")
+        raise
+    except Exception as e:
+        PRODUCE_ERRORS.labels(error_type=type(e).__name__).inc()
+        logger.error(f"Unexpected error: {str(e)}")
+        raise
 
 
 def create_kafka_topic_if_not_exists(topic_name: str):

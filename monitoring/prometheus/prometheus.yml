@@ -1,0 +1,13 @@
+scrape_configs:
+  - job_name: "producer"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["producer:8003"]
+  - job_name: "consumer"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["consumer:8004"]
+  - job_name: "mongo-service"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["mongo-service:8005"]

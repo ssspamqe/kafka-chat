@@ -12,6 +12,27 @@ import requests
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
+from prometheus_client import start_http_server, Counter, Histogram, Gauge
+import time
+
+MONGO_OPERATIONS = Counter(
+    'mongo_operations_total',
+    'Total MongoDB operations',
+    ['operation', 'collection']
+)
+
+MONGO_LATENCY = Histogram(
+    'mongo_operation_latency_seconds',
+    'MongoDB operation latency',
+    ['operation', 'collection'],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5]
+)
+
+MONGO_CONNECTIONS = Gauge(
+    'mongo_active_connections',
+    'Active MongoDB connections'
+)
+
 
 client = None
 db = None
@@ -29,11 +50,13 @@ class ChatMessage(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure messages_repository is included
+    start_http_server(8005)
+    
     global client, db, users_repository, messages_repository
 
     client = MongoClient(Variables.MONGO_CONNECTION_STRING)
     db = client[Variables.MONGO_DB]
+    MONGO_CONNECTIONS.inc()
 
     logger.info("Running migrations on startup...")
 
@@ -44,13 +67,14 @@ async def lifespan(app: FastAPI):
     logger.info("Migrations completed.")
 
     users_repository = UsersRepository(db)
-    messages_repository = MessagesRepository(db)  # Ensure this is initialized
+    messages_repository = MessagesRepository(db) 
 
     try:
         yield
     except asyncio.CancelledError:
         logger.warning("Application shutdown interrupted by CancelledError.")
     finally:
+        MONGO_CONNECTIONS.dec()
         logger.info("FastAPI application shutdown event triggered.")
 
         for task in app.state.background_tasks:
