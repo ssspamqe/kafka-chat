@@ -1,8 +1,5 @@
 version: '3.8'
 
-environment:
-  HOST_URL: 103.137.251.62
-
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
@@ -100,7 +97,7 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--web.route-prefix=/prometheus'
-      - '--web.external-url=http://${HOST_URL}/prometheus/'
+      - '--web.external-url=http://103.137.251.62/prometheus/'
     networks:
       - backend
     depends_on:
