@@ -109,11 +109,11 @@ class ApiService {
   async sendRequest(endpoint, data, method, serviceType) {
     endpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 
-    const ports = {
-      MONGO: config.MONGODB_PORT,
-      PRODUCER: config.PRODUCER_HOST,
-      CONSUMER: config.CONSUMER_HOST,
-    };
+    // const ports = {
+    //   MONGO: config.MONGODB_PORT,
+    //   PRODUCER: config.PRODUCER_HOST,
+    //   CONSUMER: config.CONSUMER_HOST,
+    // };
 
     const hostsMap = {
       MONGO: config.MONGO_SERVICE_HOST,

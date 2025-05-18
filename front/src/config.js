@@ -12,5 +12,5 @@ export const config = {
 
     MONGO_SERVICE_HOST: serviceHost + '/api/mongo_service',
     PRODUCER_SERVICE_HOST: serviceHost + '/api/producer_service',
-    CONSUMER_SERVICE_HOST: serviceHost + '/api/consumer_host'
+    CONSUMER_SERVICE_HOST: serviceHost + '/api/consumer_service'
 };
